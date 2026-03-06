@@ -3,5 +3,8 @@
         "backend",
         "frontend",
         "db"
-    ]
+    ],
+    "files.associations": {
+		"*.css": "tailwindcss"
+	}
 }
