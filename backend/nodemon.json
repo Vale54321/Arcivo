@@ -1,0 +1,12 @@
+{
+  "watch": ["src"],
+  "ext": "ts,json",
+  "ignore": ["src/**/*.spec.ts"],
+  "exec": "ts-node -r tsconfig-paths/register src/main.ts",
+  "delay": 1000,
+  "exitcrash": true,
+  "signal": "SIGTERM",
+  "env": {
+    "TS_NODE_PROJECT": "tsconfig.json"
+  }
+}

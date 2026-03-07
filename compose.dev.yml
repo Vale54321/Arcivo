@@ -27,3 +27,19 @@ services:
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
     restart: unless-stopped
+
+  backend:
+    container_name: arcivo_backend
+    build:
+      context: ./backend
+      target: dev
+    ports:
+      - 3000:3000
+    depends_on:
+      - database
+      - redis
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./backend/src:/app/src
+    restart: unless-stopped

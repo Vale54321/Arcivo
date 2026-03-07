@@ -24,3 +24,6 @@ This starts the following services:
 |---|---|---|
 | `arcivo_postgres` | PostgreSQL database | `5432` |
 | `arcivo_redis` | Valkey/Redis | `6379` |
+| `arcivo_backend` | NestJS backend | `3000` |
+
+The backend service mounts `./backend/src` into the container and uses `nodemon` for automatic restarts on file changes.
