@@ -42,4 +42,6 @@ services:
       - NODE_ENV=development
     volumes:
       - ./backend/src:/app/src
+      - ./data/library:/app/library
+      - ./data/temp:/app/temp
     restart: unless-stopped
