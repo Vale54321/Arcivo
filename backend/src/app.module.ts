@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { DocumentController } from './controllers/document.controller';
 import { DocumentService } from './services/document.service';
 import { LoggingRepository } from './repositories/logging.repository';
+import { DocumentRepository } from './repositories/document.repository';
 import { ConfigModule } from '@nestjs/config';
 import { configValidationSchema } from './config.schema';
 import { DatabaseModule } from './database/database.module';
@@ -22,6 +23,7 @@ import { StorageModule } from './storage/storage.module';
   providers: [
     DocumentService,
     FileHashService,
+    DocumentRepository,
     LoggingRepository,
   ],
 })
