@@ -3,6 +3,10 @@ import * as Joi from 'joi';
 export const configValidationSchema = Joi.object({
   PORT: Joi.number().default(3000),
 
+  // Redis configuration
+  REDIS_HOST: Joi.string().default('redis'),
+  REDIS_PORT: Joi.number().default(6379),
+
   // Database configuration
   DB_HOST: Joi.string().default('database'),
   DB_PORT: Joi.number().default(5432),

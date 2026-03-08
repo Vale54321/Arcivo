@@ -8,6 +8,7 @@ import { configValidationSchema } from './config.schema';
 import { DatabaseModule } from './database/database.module';
 import { FileHashService } from './services/hash.service';
 import { StorageModule } from './storage/storage.module';
+import { JobModule } from './jobs/job.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { StorageModule } from './storage/storage.module';
     }),
     DatabaseModule,
     StorageModule,
+    JobModule,
   ],
   controllers: [DocumentController],
   providers: [
