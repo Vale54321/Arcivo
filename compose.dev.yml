@@ -40,6 +40,7 @@ services:
       - redis
     environment:
       - NODE_ENV=development
+      - DB_PASSWORD=${DB_PASSWORD}
     volumes:
       - ./backend/src:/app/src
       - ./data/library:/app/library

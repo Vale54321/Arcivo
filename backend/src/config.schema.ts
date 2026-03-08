@@ -2,4 +2,11 @@ import * as Joi from 'joi';
 
 export const configValidationSchema = Joi.object({
   PORT: Joi.number().default(3000),
+
+  // Database configuration
+  DB_HOST: Joi.string().default('database'),
+  DB_PORT: Joi.number().default(5432),
+  DB_USERNAME: Joi.string().default('arcivo'),
+  DB_PASSWORD: Joi.string().required(),
+  DB_DATABASE: Joi.string().default('arcivo'),
 });

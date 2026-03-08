@@ -1,0 +1,50 @@
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import {
+  FileMigrationProvider,
+  Kysely,
+  Migrator,
+} from 'kysely';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+import { LoggingRepository } from 'src/repositories/logging.repository';
+import { Database } from './database.types';
+
+@Injectable()
+export class DatabaseMigrationService implements OnModuleInit {
+  constructor(
+    @Inject(Kysely) private readonly db: Kysely<Database>,
+    private readonly logger: LoggingRepository,
+  ) {
+    this.logger.setContext(DatabaseMigrationService.name);
+  }
+
+  async onModuleInit(): Promise<void> {
+    const migrator = new Migrator({
+      db: this.db,
+      provider: new FileMigrationProvider({
+        fs,
+        path,
+        migrationFolder: path.join(__dirname, 'migrations'),
+      }),
+    });
+
+    const { error, results } = await migrator.migrateToLatest();
+
+    for (const result of results ?? []) {
+      if (result.status === 'Success') {
+        this.logger.log(`Migration "${result.migrationName}" applied successfully`);
+      } else if (result.status === 'Error') {
+        this.logger.error(`Migration "${result.migrationName}" failed`);
+      }
+    }
+
+    if (error) {
+      if (error instanceof Error) {
+        this.logger.error(error, error.stack);
+      } else {
+        this.logger.error(String(error));
+      }
+      throw error;
+    }
+  }
+}

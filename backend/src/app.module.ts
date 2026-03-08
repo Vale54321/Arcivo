@@ -4,6 +4,7 @@ import { DocumentService } from './services/document.service';
 import { LoggingRepository } from './repositories/logging.repository';
 import { ConfigModule } from '@nestjs/config';
 import { configValidationSchema } from './config.schema';
+import { DatabaseModule } from './database/database.module';
 import { FileHashService } from './services/hash.service';
 import { StorageModule } from './storage/storage.module';
 
@@ -14,6 +15,7 @@ import { StorageModule } from './storage/storage.module';
       validationSchema: configValidationSchema,
       envFilePath: '../.env',
     }),
+    DatabaseModule,
     StorageModule,
   ],
   controllers: [DocumentController],
