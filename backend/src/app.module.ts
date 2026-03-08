@@ -4,6 +4,7 @@ import { DocumentService } from './services/document.service';
 import { LoggingRepository } from './repositories/logging.repository';
 import { ConfigModule } from '@nestjs/config';
 import { configValidationSchema } from './config.schema';
+import { FileHashService } from './services/hash.service';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { configValidationSchema } from './config.schema';
   controllers: [DocumentController],
   providers: [
     DocumentService,
+    FileHashService,
     LoggingRepository,
   ],
 })

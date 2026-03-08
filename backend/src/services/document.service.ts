@@ -4,27 +4,17 @@ import { copyFile, mkdir, unlink } from 'node:fs/promises';
 import { join, extname } from "node:path";
 import { LoggingRepository } from "src/repositories/logging.repository";
 import { DocumentUploadDto } from "src/dtos/document.dto";
-import { createHash } from "node:crypto";
-import { createReadStream } from "node:fs";
+import { FileHashService } from "src/services/hash.service";
 
 @Injectable()
 export class DocumentService extends BaseService {
     constructor(
         loggingRepository: LoggingRepository,
+        private readonly fileHashService: FileHashService,
     ) {
         super(loggingRepository);
     }
     private readonly uploadDir = 'library/upload';
-
-    private async calculateChecksum(filePath: string): Promise<string> {
-        return new Promise((resolve, reject) => {
-            const hash = createHash('sha1');
-            const stream = createReadStream(filePath);
-            stream.on('data', (data) => hash.update(data));
-            stream.on('end', () => resolve(hash.digest('hex')));
-            stream.on('error', (err) => reject(err));
-        });
-    }
 
     async uploadDocument(
         dto: DocumentUploadDto,
@@ -33,8 +23,7 @@ export class DocumentService extends BaseService {
         this.logger.log(`Processing document: ${file.originalname}`);
 
         try {
-            const checksum = await this.calculateChecksum(file.path);
-
+            const checksum = await this.fileHashService.getSha1(file.path);
             const fileExt = extname(file.originalname);
             const fileName = `${checksum}${fileExt}`;
 
@@ -46,7 +35,11 @@ export class DocumentService extends BaseService {
 
             return fileName;
         } catch (error) {
-            this.logger.error(`Failed to process ${file.originalname}:`, error);
+            if (error instanceof Error) {
+                this.logger.error(`Failed to process ${file.originalname}: ${error.message}`, error.stack);
+            } else {
+                this.logger.error(`Failed to process ${file.originalname}: ${String(error)}`);
+            }
             throw error;
         }
     }
