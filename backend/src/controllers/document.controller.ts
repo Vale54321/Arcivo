@@ -8,18 +8,19 @@ import {
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { DocumentUploadDto } from 'src/dtos/document.dto';
-import { LoggingRepository } from 'src/repositories/logging.repository';
+import type { DocumentResponseDto } from 'src/dtos/document.response.dto';
+import { DocumentUploadInterceptor } from 'src/middleware/document-upload.interceptor';
 import { DocumentService } from 'src/services/document.service';
 
 @Controller('document')
 export class DocumentController {
   constructor(
-    private logger: LoggingRepository,
     private service: DocumentService,
   ) { }
 
   @Post()
   @UseInterceptors(
+    DocumentUploadInterceptor,
     FileFieldsInterceptor([
       { name: 'documentData', maxCount: 1 },
     ], {
@@ -29,7 +30,7 @@ export class DocumentController {
   async uploadDocument(
     @UploadedFiles() files: { documentData?: Express.Multer.File[] },
     @Body() dto: DocumentUploadDto,
-  ) {
+  ): Promise<DocumentResponseDto> {
     const file = files.documentData?.[0];
 
     if (!file) throw new BadRequestException('No file uploaded');

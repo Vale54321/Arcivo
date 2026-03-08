@@ -21,4 +21,20 @@ export class DocumentRepository {
             .returningAll()
             .executeTakeFirstOrThrow();
     }
+
+    async findByChecksum(
+        ownerId: string,
+        checksum: string,
+    ): Promise<Pick<DocumentEntity, 'id'> | null> {
+        const checksumBuffer = Buffer.from(checksum, 'hex');
+
+        const result = await this.db
+            .selectFrom('documents')
+            .select(['id'])
+            .where('ownerId', '=', ownerId)
+            .where('checksum', '=', checksumBuffer)
+            .executeTakeFirst();
+
+        return result ?? null;
+    }
 }

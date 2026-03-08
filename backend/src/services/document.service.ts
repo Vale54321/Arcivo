@@ -1,13 +1,15 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
+import { unlink } from 'node:fs/promises';
 import { BaseService } from "./base.service";
 import { LoggingRepository } from "src/repositories/logging.repository";
 import { DocumentUploadDto } from "src/dtos/document.dto";
 import { FileHashService } from "src/services/hash.service";
-import { getMimeType, isSupportedMimeType } from "src/utils/file-type";
+import { getMimeType } from "src/utils/file-type";
 import { DocumentRepository } from "src/repositories/document.repository";
 import { StorageService } from "src/storage/storage.service";
 import { StorageBucket } from "src/storage/storage.interface";
 import { extname } from "node:path";
+import { DocumentResponseDto, DocumentStatus } from "src/dtos/document.response.dto";
 
 @Injectable()
 export class DocumentService extends BaseService {
@@ -24,20 +26,16 @@ export class DocumentService extends BaseService {
     async uploadDocument(
         dto: DocumentUploadDto,
         file: Express.Multer.File,
-    ): Promise<String> {
+    ): Promise<DocumentResponseDto> {
         this.logger.log(`Processing document: ${file.originalname}`);
         
         const mimeType = getMimeType(file.originalname);
         const extension = extname(file.originalname).toLowerCase();
 
-        if (!isSupportedMimeType(mimeType)) {
-            this.logger.warn(`Rejected unsupported file type: ${file.originalname} (${mimeType})`);
-            throw new BadRequestException('Only documents (PDF, Office, Text) are allowed.');
-        }
-
         const checksum = await this.fileHashService.getSha1(file.path);
         const fileDate = dto.fileCreatedAt ? new Date(dto.fileCreatedAt) : new Date();
 
+        this.logger.debug(`Temp name: ${file.path}`);
         this.logger.debug(`File name: ${file.originalname}`);
         this.logger.debug(`File MIME type: ${mimeType}`);
         this.logger.debug(`File extension: ${extension}`);
@@ -45,20 +43,27 @@ export class DocumentService extends BaseService {
         this.logger.debug(`File checksum: ${checksum}`);
         this.logger.debug(`File created at: ${fileDate.toISOString()}`);
 
-        const documentEntry = await this.documentRepository.create({
-            checksum: checksum,
-            name: file.originalname,
-            extension: extension,
-            size: file.size,
-            mimeType: mimeType,
-            ownerId: this.dummyOwnerId,
-            fileCreatedAt: fileDate,
-        });
-
-        const id = documentEntry.id;
-        this.logger.debug(`Created document in DB: ${id}`);
+        const duplicate = await this.documentRepository.findByChecksum(this.dummyOwnerId, checksum);
+        if (duplicate) {
+            this.logger.log(`Duplicate checksum hit for ${file.originalname}: ${duplicate.id}`);
+            await this.deleteTempFile(file.path);
+            return { status: DocumentStatus.DUPLICATE, id: duplicate.id };
+        }
 
         try {
+            const documentEntry = await this.documentRepository.create({
+                checksum: checksum,
+                name: file.originalname,
+                extension: extension,
+                size: file.size,
+                mimeType: mimeType,
+                ownerId: this.dummyOwnerId,
+                fileCreatedAt: fileDate,
+            });
+
+            const id = documentEntry.id;
+            this.logger.debug(`Created document in DB: ${id}`);
+
             const finalPath = await this.storageService.moveFileToBucket(
                 file.path, 
                 id, 
@@ -68,14 +73,31 @@ export class DocumentService extends BaseService {
 
             this.logger.log(`Document ${id} processed and stored at ${finalPath}`);
 
-            return finalPath;
+            return { status: DocumentStatus.CREATED, id: id };
         } catch (error) {
+            await this.deleteTempFile(file.path);
+
             if (error instanceof Error) {
                 this.logger.error(`Failed to process ${file.originalname}: ${error.message}`, error.stack);
             } else {
                 this.logger.error(`Failed to process ${file.originalname}: ${String(error)}`);
             }
             throw error;
+        }
+    }
+
+    async findByChecksum(checksum: string): Promise<{ id: string } | null> {
+        return await this.documentRepository.findByChecksum(this.dummyOwnerId, checksum);
+    }
+
+    private async deleteTempFile(filePath: string): Promise<void> {
+        try {
+            await unlink(filePath);
+            this.logger.debug(`Deleted temp upload: ${filePath}`);
+        } catch (error) {
+            if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+                this.logger.warn(`Failed to delete temp upload: ${filePath}`);
+            }
         }
     }
 }
