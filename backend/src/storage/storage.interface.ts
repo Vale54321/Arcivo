@@ -16,9 +16,24 @@ export interface IStorageService {
   ): Promise<string>;
 
   /**
+   * Directly writes a buffer to the destination.
+   */
+  writeBufferToBucket(
+    buffer: Buffer,
+    documentId: string,
+    extension: string,
+    bucket: StorageBucket
+  ): Promise<string>
+
+  /**
    * Deletes a file from the specified storage bucket.
    */
   deleteFromBucket(documentId: string, extension: string, bucket: StorageBucket): Promise<void>;
+
+  /**
+   * Resolves the full storage path for a file in the specified bucket.
+   */
+  resolveFilePath(documentId: string, extension: string, bucket: StorageBucket): string;
 
   /**
    * Generates the sharded directory path based on an ID.

@@ -22,6 +22,14 @@ export class DocumentRepository {
             .executeTakeFirstOrThrow();
     }
 
+    async findById(id: string) {
+        return await this.db
+            .selectFrom('documents')
+            .selectAll()
+            .where('id', '=', id)
+            .executeTakeFirst();
+    }
+
     async findByChecksum(
         ownerId: string,
         checksum: string,

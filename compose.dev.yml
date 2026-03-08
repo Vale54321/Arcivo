@@ -46,3 +46,6 @@ services:
       - ./data/library:/app/library
       - ./data/temp:/app/temp
     restart: unless-stopped
+
+  gotenberg:
+    image: gotenberg/gotenberg:8

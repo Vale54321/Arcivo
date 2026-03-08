@@ -3,6 +3,9 @@ import * as Joi from 'joi';
 export const configValidationSchema = Joi.object({
   PORT: Joi.number().default(3000),
 
+  // Gotenberg configuration
+  GOTENBERG_URL: Joi.string().uri().default('http://gotenberg:3000'),
+
   // Redis configuration
   REDIS_HOST: Joi.string().default('redis'),
   REDIS_PORT: Joi.number().default(6379),

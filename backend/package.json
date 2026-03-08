@@ -27,6 +27,7 @@
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/swagger": "^11.2.6",
     "bullmq": "^5.70.4",
+    "chromiumly": "^4.3.0",
     "class-validator": "^0.15.1",
     "joi": "^18.0.2",
     "kysely": "^0.28.11",

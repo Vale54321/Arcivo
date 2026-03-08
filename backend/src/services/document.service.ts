@@ -10,11 +10,13 @@ import { StorageService } from "src/storage/storage.service";
 import { StorageBucket } from "src/storage/storage.interface";
 import { extname } from "node:path";
 import { DocumentResponseDto, DocumentStatus } from "src/dtos/document.response.dto";
+import { JobService } from "src/jobs/job.service";
 
 @Injectable()
 export class DocumentService extends BaseService {
     constructor(
         private documentRepository: DocumentRepository,
+        private jobService: JobService,
         private storageService: StorageService,
         loggingRepository: LoggingRepository,
         private readonly fileHashService: FileHashService,
@@ -71,7 +73,9 @@ export class DocumentService extends BaseService {
                 StorageBucket.UPLOAD
             );
 
-            this.logger.log(`Document ${id} processed and stored at ${finalPath}`);
+            this.logger.log(`Document ${id} uploaded and stored at ${finalPath}`);
+
+            await this.jobService.addPdfConversionJob(id);
 
             return { status: DocumentStatus.CREATED, id: id };
         } catch (error) {

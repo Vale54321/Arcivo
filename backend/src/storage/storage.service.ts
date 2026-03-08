@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { join } from 'node:path';
-import { mkdir, copyFile, unlink } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
+import { mkdir, copyFile, unlink, writeFile } from 'node:fs/promises';
 import { IStorageService, StorageBucket } from './storage.interface';
 
 @Injectable()
@@ -20,9 +20,8 @@ export class StorageService implements IStorageService {
         extension: string,
         bucket: StorageBucket
     ): Promise<string> {
-    const shard = this.getShardPath(documentId);
-    const finalDir = join(this.libraryRoot, bucket, shard);
-    const finalPath = join(finalDir, `${documentId}${extension}`);
+    const finalPath = this.resolveFilePath(documentId, extension, bucket);
+    const finalDir = dirname(finalPath);
 
     try {
       await mkdir(finalDir, { recursive: true });
@@ -37,10 +36,34 @@ export class StorageService implements IStorageService {
     }
   }
 
-  async deleteFromBucket(documentId: string, extension: string, bucket: StorageBucket): Promise<void> {
+  async writeBufferToBucket(
+    buffer: Buffer,
+    documentId: string,
+    extension: string,
+    bucket: StorageBucket
+  ): Promise<string> {
+    const finalPath = this.resolveFilePath(documentId, extension, bucket);
+    const finalDir = dirname(finalPath);
+
+    try {
+      await mkdir(finalDir, { recursive: true });
+      await writeFile(finalPath, buffer);
+      
+      this.logger.debug(`Buffer stored successfully: ${finalPath}`);
+      return finalPath;
+    } catch (error) {
+      this.logger.error(`Failed to write buffer for ${documentId}`, error);
+      throw error;
+    }
+  }
+
+  resolveFilePath(documentId: string, extension: string, bucket: StorageBucket): string {
     const shard = this.getShardPath(documentId);
-    const fileName = `${documentId}${extension}`;
-    const fullPath = join(this.libraryRoot, bucket, shard, fileName);
+    return join(this.libraryRoot, bucket, shard, `${documentId}${extension}`);
+  }
+
+  async deleteFromBucket(documentId: string, extension: string, bucket: StorageBucket): Promise<void> {
+    const fullPath = this.resolveFilePath(documentId, extension, bucket);
     
     await this.deleteFile(fullPath);
   }
