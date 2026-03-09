@@ -7,8 +7,9 @@ import { ThumbnailJobData } from '../interfaces/job-data.interface';
 import { StorageBucket } from 'src/storage/storage.interface';
 import { Poppler } from 'node-poppler';
 import sharp from 'sharp';
+import { QUEUES } from '../job.constants';
 
-@Processor('thumbnail-processing')
+@Processor(QUEUES.THUMBNAIL_PROCESSING)
 export class ThumbnailProcessor extends WorkerHost {
     private readonly logger = new Logger(ThumbnailProcessor.name);
     private readonly poppler = new Poppler();

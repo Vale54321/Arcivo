@@ -6,8 +6,9 @@ import { DocumentRepository } from 'src/repositories/document.repository';
 import { ThumbnailJobData } from '../interfaces/job-data.interface';
 import { StorageBucket } from 'src/storage/storage.interface';
 import { Poppler } from 'node-poppler';
+import { QUEUES } from '../job.constants';
 
-@Processor('text-extraction')
+@Processor(QUEUES.TEXT_EXTRACTION)
 export class TextExtractionProcessor extends WorkerHost {
     private readonly logger = new Logger(TextExtractionProcessor.name);
     private readonly poppler = new Poppler();

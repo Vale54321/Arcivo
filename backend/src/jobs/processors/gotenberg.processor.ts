@@ -7,8 +7,9 @@ import { LibreOffice, PdfFormat } from 'chromiumly';
 import { StorageBucket } from 'src/storage/storage.interface';
 import { StorageService } from 'src/storage/storage.service';
 import { JobService } from '../job.service';
+import { QUEUES } from '../job.constants';
 
-@Processor('gotenberg-conversion')
+@Processor(QUEUES.GOTENBERG_CONVERSION)
 export class GotenbergProcessor extends WorkerHost {
     private readonly logger = new Logger(GotenbergProcessor.name);
 
