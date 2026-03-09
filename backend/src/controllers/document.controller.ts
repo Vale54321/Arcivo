@@ -11,6 +11,7 @@ import {
   StreamableFile,
   UploadedFiles,
   UseInterceptors,
+  Query,
 } from '@nestjs/common';
 import { createReadStream } from 'node:fs';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
@@ -48,6 +49,12 @@ export class DocumentController {
   @Get()
   async getAll() {
     return await this.service.getAllDocuments();
+  }
+
+  @Get('search')
+  async search(@Query('q') q: string) {
+    if (!q?.trim()) throw new BadRequestException('Query parameter "q" is required');
+    return await this.service.searchDocuments(q.trim());
   }
 
   @Get(':id')

@@ -72,6 +72,30 @@ export class DocumentRepository {
             .executeTakeFirst();
     }
 
+    async search(query: string) {
+        const term = `%${query}%`;
+        return await this.db
+            .selectFrom('documents')
+            .select([
+                'id',
+                'name',
+                'size',
+                'mimeType',
+                'fileCreatedAt',
+                'createdAt',
+                'hasThumbnail',
+                'textContent'
+            ])
+            .where((eb) =>
+                eb.or([
+                    eb('name', 'ilike', term),
+                    eb('textContent', 'ilike', term),
+                ])
+            )
+            .orderBy('fileCreatedAt', 'desc')
+            .execute();
+    }
+
     async delete(id: string): Promise<boolean> {
         const result = await this.db
             .deleteFrom('documents')

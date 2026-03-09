@@ -32,7 +32,7 @@ export class DocumentService extends BaseService {
         file: Express.Multer.File,
     ): Promise<DocumentResponseDto> {
         this.logger.log(`Processing document: ${file.originalname}`);
-        
+
         const mimeType = getMimeType(file.originalname);
         const extension = extname(file.originalname).toLowerCase();
 
@@ -69,8 +69,8 @@ export class DocumentService extends BaseService {
             this.logger.debug(`Created document in DB: ${id}`);
 
             const finalPath = await this.storageService.moveFileToBucket(
-                file.path, 
-                id, 
+                file.path,
+                id,
                 extension,
                 StorageBucket.UPLOAD
             );
@@ -171,6 +171,35 @@ export class DocumentService extends BaseService {
                 this.logger.warn(`Failed to delete temp upload: ${filePath}`);
             }
         }
+    }
+
+    async searchDocuments(query: string) {
+        const term = query.trim();
+        this.logger.log(`Searching documents for: "${query}"`);
+
+        const docs = await this.documentRepository.search(query);
+
+        if (!docs || docs.length === 0) {
+            throw new NotFoundException(`No documents found for: "${term}"`);
+        }
+
+        const normalizedTerm = term.toLowerCase();
+
+        return docs.map((doc) => {
+            const isNameMatch = doc.name.toLowerCase().includes(normalizedTerm);
+            const isContentMatch = doc.textContent?.toLowerCase().includes(normalizedTerm) ?? false;
+
+            let matchType: 'filename' | 'content' | 'both' = 'content';
+            if (isNameMatch && isContentMatch) matchType = 'both';
+            else if (isNameMatch) matchType = 'filename';
+
+            const { textContent, ...rest } = doc;
+
+            return {
+                ...rest,
+                matchType,
+            };
+        });
     }
 
     private async ensureFileExists(filePath: string, message: string): Promise<void> {
