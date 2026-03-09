@@ -5,11 +5,14 @@ import {
   Delete,
   Get,
   HttpCode,
+  Header,
   Param,
   Post,
+  StreamableFile,
   UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
+import { createReadStream } from 'node:fs';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { DocumentUploadDto } from 'src/dtos/document.dto';
 import type { DocumentResponseDto } from 'src/dtos/document.response.dto';
@@ -50,6 +53,14 @@ export class DocumentController {
   @Get(':id')
   async getById(@Param('id') id: string) {
     return await this.service.getDocumentById(id);
+  }
+
+  @Get(':id/thumbnail')
+  @Header('Content-Type', 'image/webp')
+  async getThumbnail(@Param('id') id: string): Promise<StreamableFile> {
+    const thumbnailPath = await this.service.getDocumentThumbnailPath(id);
+    const stream = createReadStream(thumbnailPath);
+    return new StreamableFile(stream);
   }
 
   @Delete(':id')

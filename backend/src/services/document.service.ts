@@ -1,5 +1,7 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { unlink } from 'node:fs/promises';
+import { access } from 'node:fs/promises';
+import { constants } from 'node:fs';
 import { BaseService } from "./base.service";
 import { LoggingRepository } from "src/repositories/logging.repository";
 import { DocumentUploadDto } from "src/dtos/document.dto";
@@ -98,6 +100,24 @@ export class DocumentService extends BaseService {
         const doc = await this.documentRepository.findById(id);
         if (!doc) throw new NotFoundException(`Document ${id} not found`);
         return doc;
+    }
+
+    async getDocumentThumbnailPath(id: string): Promise<string> {
+        const doc = await this.documentRepository.findById(id);
+        if (!doc) throw new NotFoundException(`Document ${id} not found`);
+        if (!doc.hasThumbnail) {
+            throw new NotFoundException(`Thumbnail for document ${id} not found`);
+        }
+
+        const thumbnailPath = await this.storageService.resolveFilePath(id, '.webp', StorageBucket.THUMBS);
+
+        try {
+            await access(thumbnailPath, constants.F_OK);
+        } catch {
+            throw new NotFoundException(`Thumbnail for document ${id} not found`);
+        }
+
+        return thumbnailPath;
     }
 
     async getAllDocuments() {
