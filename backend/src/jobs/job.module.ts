@@ -9,6 +9,7 @@ import { ThumbnailProcessor } from './processors/thumbnail.processor';
 import { StorageModule } from 'src/storage/storage.module';
 import { DocumentRepository } from 'src/repositories/document.repository';
 import { LoggingRepository } from 'src/repositories/logging.repository';
+import { TextExtractionProcessor } from './processors/text-extraction.processor';
 
 @Module({
     imports: [
@@ -25,6 +26,7 @@ import { LoggingRepository } from 'src/repositories/logging.repository';
         BullModule.registerQueue(
             { name: QUEUES.GOTENBERG_CONVERSION },
             { name: QUEUES.THUMBNAIL_PROCESSING },
+            { name: QUEUES.TEXT_EXTRACTION },
         ),
         StorageModule,
     ],
@@ -33,6 +35,7 @@ import { LoggingRepository } from 'src/repositories/logging.repository';
         JobService,
         GotenbergProcessor,
         ThumbnailProcessor,
+        TextExtractionProcessor, 
         DocumentRepository,
         LoggingRepository,
     ],

@@ -5,3 +5,7 @@ export interface PdfConversionJobData {
 export interface ThumbnailJobData {
     documentId: string;
 }
+
+export interface TextExtractionJobData {
+    documentId: string;
+}

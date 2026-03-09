@@ -40,6 +40,7 @@ export class GotenbergProcessor extends WorkerHost {
 
             await Promise.all([
                 this.jobService.addThumbnailJob(documentId),
+                this.jobService.addTextExtractionJob(documentId),
             ]);
         } catch (error) {
             this.logger.error(`Job ${job.id} failed: ${error.message}`, error.stack);
