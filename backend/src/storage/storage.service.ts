@@ -20,7 +20,7 @@ export class StorageService implements IStorageService {
         extension: string,
         bucket: StorageBucket
     ): Promise<string> {
-    const finalPath = this.resolveFilePath(documentId, extension, bucket);
+    const finalPath = await this.resolveFilePath(documentId, extension, bucket);
     const finalDir = dirname(finalPath);
 
     try {
@@ -42,7 +42,7 @@ export class StorageService implements IStorageService {
     extension: string,
     bucket: StorageBucket
   ): Promise<string> {
-    const finalPath = this.resolveFilePath(documentId, extension, bucket);
+    const finalPath = await this.resolveFilePath(documentId, extension, bucket);
     const finalDir = dirname(finalPath);
 
     try {
@@ -57,13 +57,24 @@ export class StorageService implements IStorageService {
     }
   }
 
-  resolveFilePath(documentId: string, extension: string, bucket: StorageBucket): string {
+  async resolveFilePath(
+    documentId: string,
+    extension: string,
+    bucket: StorageBucket,
+    createDirectory = false,
+  ): Promise<string> {
     const shard = this.getShardPath(documentId);
-    return join(this.libraryRoot, bucket, shard, `${documentId}${extension}`);
+    const filePath = join(this.libraryRoot, bucket, shard, `${documentId}${extension}`);
+
+    if (createDirectory) {
+      await mkdir(dirname(filePath), { recursive: true });
+    }
+
+    return filePath;
   }
 
   async deleteFromBucket(documentId: string, extension: string, bucket: StorageBucket): Promise<void> {
-    const fullPath = this.resolveFilePath(documentId, extension, bucket);
+    const fullPath = await this.resolveFilePath(documentId, extension, bucket);
     
     await this.deleteFile(fullPath);
   }

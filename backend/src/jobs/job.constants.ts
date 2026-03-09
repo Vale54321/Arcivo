@@ -1,9 +1,11 @@
 export const QUEUES = {
-  GOTENBERG_CONVERSION: 'gotenberg-conversion',
+    GOTENBERG_CONVERSION: 'gotenberg-conversion',
+    THUMBNAIL_PROCESSING: 'thumbnail-processing',
 };
 
 export const JOB_TYPES = {
-  CONVERT_TO_PDF: 'convert_to_pdf',
+    CONVERT_TO_PDF: 'convert_to_pdf',
+    GENERATE_THUMBNAIL: 'generate_thumbnail',
 };
 
 export const JOB_OPTS = {

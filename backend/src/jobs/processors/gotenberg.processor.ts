@@ -6,6 +6,7 @@ import { PdfConversionJobData } from '../interfaces/job-data.interface';
 import { LibreOffice, PdfFormat } from 'chromiumly';
 import { StorageBucket } from 'src/storage/storage.interface';
 import { StorageService } from 'src/storage/storage.service';
+import { JobService } from '../job.service';
 
 @Processor('gotenberg-conversion')
 export class GotenbergProcessor extends WorkerHost {
@@ -14,19 +15,20 @@ export class GotenbergProcessor extends WorkerHost {
     constructor(
         private readonly documentRepository: DocumentRepository,
         private readonly storageService: StorageService,
+        private readonly jobService: JobService,
     ) {
         super();
     }
 
     async process(job: Job<PdfConversionJobData>): Promise<void> {
+        const { documentId } = job.data;
+        this.logger.log(`Processing PDF conversion job ${job.id}: ${documentId}`);
+        
         try {
-            const { documentId } = job.data;
-            this.logger.log(`Converting document ${documentId} to PDF/A`);
-
             const doc = await this.documentRepository.findById(documentId);
             if (!doc) throw new Error(`Document ${documentId} not found`);
 
-            const originalPath = this.storageService.resolveFilePath(documentId, doc.extension, StorageBucket.UPLOAD);
+            const originalPath = await this.storageService.resolveFilePath(documentId, doc.extension, StorageBucket.UPLOAD);
 
             const buffer = await LibreOffice.convert({
                 files: [originalPath],
@@ -35,6 +37,10 @@ export class GotenbergProcessor extends WorkerHost {
 
             const archivePath = await this.storageService.writeBufferToBucket(buffer, documentId, '.pdf', StorageBucket.ARCHIVE);
             this.logger.log(`Converted to PDF/A: ${archivePath}`);
+
+            await Promise.all([
+                this.jobService.addThumbnailJob(documentId),
+            ]);
         } catch (error) {
             this.logger.error(`Job ${job.id} failed: ${error.message}`, error.stack);
             throw error;

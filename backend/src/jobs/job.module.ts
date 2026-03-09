@@ -5,6 +5,7 @@ import { Chromiumly } from 'chromiumly';
 import { QUEUES } from './job.constants';
 import { JobService } from './job.service';
 import { GotenbergProcessor } from './processors/gotenberg.processor';
+import { ThumbnailProcessor } from './processors/thumbnail.processor';
 import { StorageModule } from 'src/storage/storage.module';
 import { DocumentRepository } from 'src/repositories/document.repository';
 import { LoggingRepository } from 'src/repositories/logging.repository';
@@ -21,11 +22,20 @@ import { LoggingRepository } from 'src/repositories/logging.repository';
             }),
         }),
 
-        BullModule.registerQueue({ name: QUEUES.GOTENBERG_CONVERSION }),
+        BullModule.registerQueue(
+            { name: QUEUES.GOTENBERG_CONVERSION },
+            { name: QUEUES.THUMBNAIL_PROCESSING },
+        ),
         StorageModule,
     ],
     controllers: [],
-    providers: [JobService, GotenbergProcessor, DocumentRepository, LoggingRepository],
+    providers: [
+        JobService,
+        GotenbergProcessor,
+        ThumbnailProcessor,
+        DocumentRepository,
+        LoggingRepository,
+    ],
     exports: [BullModule, JobService],
 })
 export class JobModule implements OnModuleInit {

@@ -4,6 +4,7 @@ import {
     Database,
     DocumentEntity,
     NewDocument,
+    DocumentUpdate,
 } from 'src/database/database.types';
 
 export type CreateDocumentDto = Omit<NewDocument, 'checksum'> & { checksum: string };
@@ -44,5 +45,14 @@ export class DocumentRepository {
             .executeTakeFirst();
 
         return result ?? null;
+    }
+
+    async update(id: string, data: DocumentUpdate) {
+        return await this.db
+            .updateTable('documents')
+            .set(data as any)
+            .where('id', '=', id)
+            .returningAll()
+            .executeTakeFirst();
     }
 }

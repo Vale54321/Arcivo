@@ -1,6 +1,7 @@
 export enum StorageBucket {
   ARCHIVE = 'archive',
-  UPLOAD = 'upload'
+  UPLOAD = 'upload',
+  THUMBS = 'thumbs',
 }
 
 export interface IStorageService {
@@ -33,7 +34,12 @@ export interface IStorageService {
   /**
    * Resolves the full storage path for a file in the specified bucket.
    */
-  resolveFilePath(documentId: string, extension: string, bucket: StorageBucket): string;
+  resolveFilePath(
+    documentId: string,
+    extension: string,
+    bucket: StorageBucket,
+    createDirectory?: boolean,
+  ): Promise<string>;
 
   /**
    * Generates the sharded directory path based on an ID.
