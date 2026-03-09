@@ -10,7 +10,7 @@ import { getMimeType } from "src/utils/file-type";
 import { DocumentRepository } from "src/repositories/document.repository";
 import { StorageService } from "src/storage/storage.service";
 import { StorageBucket } from "src/storage/storage.interface";
-import { extname } from "node:path";
+import { basename, extname } from "node:path";
 import { DocumentResponseDto, DocumentStatus } from "src/dtos/document.response.dto";
 import { JobService } from "src/jobs/job.service";
 
@@ -111,13 +111,36 @@ export class DocumentService extends BaseService {
 
         const thumbnailPath = await this.storageService.resolveFilePath(id, '.webp', StorageBucket.THUMBS);
 
-        try {
-            await access(thumbnailPath, constants.F_OK);
-        } catch {
-            throw new NotFoundException(`Thumbnail for document ${id} not found`);
-        }
+        await this.ensureFileExists(thumbnailPath, `Thumbnail for document ${id} not found`);
 
         return thumbnailPath;
+    }
+
+    async getDocumentFile(id: string): Promise<{ path: string; mimeType: string; name: string }> {
+        const doc = await this.documentRepository.findById(id);
+        if (!doc) throw new NotFoundException(`Document ${id} not found`);
+
+        const filePath = await this.storageService.resolveFilePath(id, doc.extension, StorageBucket.UPLOAD);
+        await this.ensureFileExists(filePath, `File for document ${id} not found`);
+
+        return {
+            path: filePath,
+            mimeType: doc.mimeType,
+            name: doc.name,
+        };
+    }
+
+    async getDocumentArchive(id: string): Promise<{ path: string; name: string }> {
+        const doc = await this.documentRepository.findById(id);
+        if (!doc) throw new NotFoundException(`Document ${id} not found`);
+
+        const archivePath = await this.storageService.resolveFilePath(id, '.pdf', StorageBucket.ARCHIVE);
+        await this.ensureFileExists(archivePath, `Archive for document ${id} not found`);
+
+        return {
+            path: archivePath,
+            name: `${basename(doc.name, doc.extension)}.pdf`,
+        };
     }
 
     async getAllDocuments() {
@@ -147,6 +170,14 @@ export class DocumentService extends BaseService {
             if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
                 this.logger.warn(`Failed to delete temp upload: ${filePath}`);
             }
+        }
+    }
+
+    private async ensureFileExists(filePath: string, message: string): Promise<void> {
+        try {
+            await access(filePath, constants.F_OK);
+        } catch {
+            throw new NotFoundException(message);
         }
     }
 }

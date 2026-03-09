@@ -55,6 +55,28 @@ export class DocumentController {
     return await this.service.getDocumentById(id);
   }
 
+  @Get(':id/file')
+  async getFile(@Param('id') id: string): Promise<StreamableFile> {
+    const documentFile = await this.service.getDocumentFile(id);
+    const stream = createReadStream(documentFile.path);
+
+    return new StreamableFile(stream, {
+      type: documentFile.mimeType,
+      disposition: `inline; filename="${documentFile.name}"`,
+    });
+  }
+
+  @Get(':id/archive')
+  async getArchive(@Param('id') id: string): Promise<StreamableFile> {
+    const archiveFile = await this.service.getDocumentArchive(id);
+    const stream = createReadStream(archiveFile.path);
+
+    return new StreamableFile(stream, {
+      type: 'application/pdf',
+      disposition: `inline; filename="${archiveFile.name}"`,
+    });
+  }
+
   @Get(':id/thumbnail')
   @Header('Content-Type', 'image/webp')
   async getThumbnail(@Param('id') id: string): Promise<StreamableFile> {
