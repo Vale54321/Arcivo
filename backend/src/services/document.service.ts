@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { unlink } from 'node:fs/promises';
 import { BaseService } from "./base.service";
 import { LoggingRepository } from "src/repositories/logging.repository";
@@ -90,8 +90,33 @@ export class DocumentService extends BaseService {
         }
     }
 
-    async findByChecksum(checksum: string): Promise<{ id: string } | null> {
+    async getDocumentByChecksum(checksum: string): Promise<{ id: string } | null> {
         return await this.documentRepository.findByChecksum(this.dummyOwnerId, checksum);
+    }
+
+    async getDocumentById(id: string) {
+        const doc = await this.documentRepository.findById(id);
+        if (!doc) throw new NotFoundException(`Document ${id} not found`);
+        return doc;
+    }
+
+    async getAllDocuments() {
+        this.logger.log('Fetching all documents');
+        return await this.documentRepository.findAll();
+    }
+
+    async deleteDocument(id: string): Promise<void> {
+        const doc = await this.documentRepository.findById(id);
+        if (!doc) throw new NotFoundException('Document not found');
+
+        const deleted = await this.documentRepository.delete(id);
+        if (!deleted) throw new NotFoundException('Document not found');
+
+        await this.storageService.deleteFromBucket(id, doc.extension, StorageBucket.UPLOAD);
+        await this.storageService.deleteFromBucket(id, '.webp', StorageBucket.THUMBS);
+        await this.storageService.deleteFromBucket(id, '.pdf', StorageBucket.ARCHIVE);
+
+        this.logger.log(`Deleted document ${id} and associated files`);
     }
 
     private async deleteTempFile(filePath: string): Promise<void> {

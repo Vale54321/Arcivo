@@ -38,7 +38,7 @@ export class DocumentUploadInterceptor implements NestInterceptor {
     }
 
     if (checksum) {
-      const duplicate = await this.service.findByChecksum(checksum);
+      const duplicate = await this.service.getDocumentByChecksum(checksum);
       if (duplicate) {
         const tempPath = req.files?.documentData?.[0]?.path || undefined;
         if (tempPath) await this.deleteTempFile(tempPath);

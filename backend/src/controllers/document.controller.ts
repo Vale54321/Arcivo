@@ -2,6 +2,10 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
   Post,
   UploadedFiles,
   UseInterceptors,
@@ -36,5 +40,21 @@ export class DocumentController {
     if (!file) throw new BadRequestException('No file uploaded');
 
     return this.service.uploadDocument(dto, file);
+  }
+
+  @Get()
+  async getAll() {
+    return await this.service.getAllDocuments();
+  }
+
+  @Get(':id')
+  async getById(@Param('id') id: string) {
+    return await this.service.getDocumentById(id);
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  async deleteDocument(@Param('id') id: string) {
+    return await this.service.deleteDocument(id);
   }
 }

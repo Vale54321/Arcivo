@@ -47,6 +47,22 @@ export class DocumentRepository {
         return result ?? null;
     }
 
+    async findAll() {
+        return await this.db
+            .selectFrom('documents')
+            .select([
+                'id',
+                'name',
+                'size',
+                'mimeType',
+                'fileCreatedAt',
+                'createdAt',
+                'hasThumbnail',
+            ])
+            .orderBy('fileCreatedAt', 'desc')
+            .execute();
+    }
+
     async update(id: string, data: DocumentUpdate) {
         return await this.db
             .updateTable('documents')
@@ -54,5 +70,13 @@ export class DocumentRepository {
             .where('id', '=', id)
             .returningAll()
             .executeTakeFirst();
+    }
+
+    async delete(id: string): Promise<boolean> {
+        const result = await this.db
+            .deleteFrom('documents')
+            .where('id', '=', id)
+            .executeTakeFirst();
+        return result.numDeletedRows > 0n;
     }
 }
