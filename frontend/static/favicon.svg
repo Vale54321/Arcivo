@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 48" fill="none">
+  <defs>
+    <symbol id="arcivo-mark" viewBox="0 0 44 48">
+      <path d="M22 4 L6 44" stroke="currentColor" stroke-width="7" stroke-linecap="round" />
+      <path d="M22 4 L38 44" stroke="#dc2626" stroke-width="7" stroke-linecap="round" />
+      <path d="M12 31 L32 31" stroke="#dc2626" stroke-width="7" stroke-linecap="round" />
+    </symbol>
+    <symbol id="arcivo-wordmark" viewBox="0 0 88 44">
+      <text
+        x="0"
+        y="34"
+        font-family="system-ui, -apple-system, sans-serif"
+        font-size="30"
+        font-weight="800"
+        fill="currentColor"
+        letter-spacing="-0.5"
+      >
+        rc<tspan fill="#dc2626">i</tspan>vo
+      </text>
+    </symbol>
+  </defs>
+  <use href="#arcivo-mark" />
+</svg>
