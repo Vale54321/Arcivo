@@ -1,1 +1,21 @@
 @import 'tailwindcss';
+@theme {
+	--animate-splash-slide: splash-slide 1.1s ease-in-out infinite;
+
+	@keyframes splash-slide {
+		0% {
+			width: 0%;
+			margin-left: 0%;
+		}
+
+		50% {
+			width: 60%;
+			margin-left: 20%;
+		}
+
+		100% {
+			width: 0%;
+			margin-left: 100%;
+		}
+	}
+}
