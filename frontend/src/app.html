@@ -8,7 +8,7 @@
 	<body data-sveltekit-preload-data="hover">
 		<div
 			id="arcivo-splash"
-			class="fixed inset-0 z-9999 flex flex-col items-center justify-center gap-7 bg-white text-neutral-900 transition-opacity duration-250"
+			class="fixed inset-0 z-9999 flex flex-col items-center justify-center gap-7 bg-white text-neutral-900 transition-opacity duration-250 dark:bg-[#0a0a0a] dark:text-neutral-100"
 		>
 			<span class="inline-flex h-10 items-center gap-0" aria-label="Arcivo">
 				<svg
@@ -30,10 +30,17 @@
 					<use href="%sveltekit.assets%/favicon.svg#arcivo-wordmark" />
 				</svg>
 			</span>
-			<div class="h-0.5 w-40 overflow-hidden rounded-full bg-neutral-200">
+			<div class="h-0.5 w-40 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800">
 				<div class="h-full animate-splash-slide rounded-full bg-red-600"></div>
 			</div>
 		</div>
+		<script>
+			(function () {
+				var dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+				document.documentElement.classList.toggle('dark', dark);
+				document.documentElement.style.background = dark ? '#0a0a0a' : '#ffffff';
+			})();
+		</script>
 		<div style="display: contents">%sveltekit.body%</div>
 	</body>
 </html>

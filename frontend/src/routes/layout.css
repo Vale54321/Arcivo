@@ -1,4 +1,23 @@
 @import 'tailwindcss';
+
+@variant dark (&:where(.dark, .dark *));
+
+@layer base {
+	html {
+		color-scheme: light;
+		@apply bg-white;
+	}
+
+	html.dark {
+		color-scheme: dark;
+		@apply bg-neutral-950;
+	}
+
+	body {
+		@apply bg-white text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100;
+	}
+}
+
 @theme {
 	--animate-splash-slide: splash-slide 1.1s ease-in-out infinite;
 
