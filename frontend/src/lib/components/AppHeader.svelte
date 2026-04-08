@@ -1,7 +1,10 @@
 <script lang="ts">
 	import { getSidebarContext } from '$lib/state/sidebar.svelte';
+	import { getThemeContext } from '$lib/state/theme.svelte';
+	import { Menu, Moon, Sun, SunMoon } from '@lucide/svelte';
 
 	const sidebar = getSidebarContext();
+	const theme = getThemeContext();
 </script>
 
 <header
@@ -14,5 +17,31 @@
 		aria-label="Open sidebar"
 	>
 		<Menu size={20} />
+	</button>
+
+	<div class="flex-1"></div>
+
+	<!-- Theme toggle -->
+	<button
+		onclick={theme.toggle}
+		class="ml-3 flex shrink-0 items-center justify-center rounded-md p-1.5 text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
+		aria-label={theme.current === 'system'
+			? 'Switch to light theme'
+			: theme.current === 'light'
+				? 'Switch to dark theme'
+				: 'Use system theme'}
+		title={theme.current === 'system'
+			? 'Switch to light theme'
+			: theme.current === 'light'
+				? 'Switch to dark theme'
+				: 'Use system theme'}
+	>
+		{#if theme.current === 'system'}
+			<SunMoon size={18} />
+		{:else if theme.current === 'light'}
+			<Moon size={18} />
+		{:else}
+			<Sun size={18} />
+		{/if}
 	</button>
 </header>

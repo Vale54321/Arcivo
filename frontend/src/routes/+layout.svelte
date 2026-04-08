@@ -4,10 +4,12 @@
 	import AppHeader from '$lib/components/AppHeader.svelte';
 	import SideNav from '$lib/components/SideNav.svelte';
 	import { setSidebarContext } from '$lib/state/sidebar.svelte';
+	import { setThemeContext } from '$lib/state/theme.svelte';
 
 	let { children } = $props();
 
 	setSidebarContext();
+	setThemeContext();
 
 	onMount(() => {
 		const splash = document.getElementById('arcivo-splash');
