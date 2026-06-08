@@ -10,6 +10,24 @@ COPY package*.json ./
 RUN npm ci
 
 
+FROM base AS build
+
+COPY . .
+RUN npm run build
+
+
+FROM base AS production
+
+ENV NODE_ENV=production
+
+RUN npm ci --omit=dev
+
+COPY --from=build /app/dist ./dist
+
+ENTRYPOINT ["/usr/bin/tini", "--"]
+CMD ["node", "dist/main"]
+
+
 FROM base AS dev
 
 COPY . .
