@@ -9,6 +9,8 @@ import { DatabaseModule } from './database/database.module';
 import { FileHashService } from './services/hash.service';
 import { StorageModule } from './storage/storage.module';
 import { JobModule } from './jobs/job.module';
+import { join } from 'path';
+import { ServeStaticModule } from '@nestjs/serve-static';
 
 @Module({
   imports: [
@@ -16,6 +18,10 @@ import { JobModule } from './jobs/job.module';
       isGlobal: true,
       validationSchema: configValidationSchema,
       envFilePath: '../.env',
+    }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, 'client'),
+      exclude: ['/api/{*any}'],
     }),
     DatabaseModule,
     StorageModule,
@@ -29,4 +35,4 @@ import { JobModule } from './jobs/job.module';
     LoggingRepository,
   ],
 })
-export class AppModule { }
+export class AppModule {}

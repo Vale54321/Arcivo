@@ -1,13 +1,19 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
-import { Logger } from '@nestjs/common';
+import { Logger, VersioningType } from '@nestjs/common';
 
 async function bootstrap() {
   const bootLogger = new Logger('Bootstrap');
 
   const app = await NestFactory.create(AppModule);
   app.enableCors();
+
+  app.setGlobalPrefix('api');
+  app.enableVersioning({
+    type: VersioningType.URI,
+    defaultVersion: '1',
+  });
 
   const configService = app.get(ConfigService<any, true>);
   const port = configService.get<number>('PORT');
