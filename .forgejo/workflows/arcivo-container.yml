@@ -12,10 +12,6 @@ on:
       - ".forgejo/workflows/arcivo-container.yml"
   workflow_dispatch:
 
-permissions:
-  contents: read
-  packages: write
-
 env:
   REGISTRY: git.heiserer.de
   IMAGE_NAME: ${{ forgejo.repository }}/backend
@@ -42,6 +38,8 @@ jobs:
 
       - name: Build frontend
         working-directory: ./frontend
+        env:
+          PUBLIC_API_BASE_URL: /api
         run: npm run build
 
       - name: Stage frontend build into Arcivo image context
