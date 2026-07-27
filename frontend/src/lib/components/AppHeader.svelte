@@ -5,6 +5,12 @@
 
 	const sidebar = getSidebarContext();
 	const theme = getThemeContext();
+	const NEXT_THEME_MESSAGE = {
+		system: 'Switch to light theme',
+		light: 'Switch to dark theme',
+		dark: 'Use system theme'
+	};
+	const themeMessage = NEXT_THEME_MESSAGE[theme.current];
 </script>
 
 <header
@@ -25,16 +31,8 @@
 	<button
 		onclick={theme.toggle}
 		class="ml-3 flex shrink-0 items-center justify-center rounded-md p-1.5 text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
-		aria-label={theme.current === 'system'
-			? 'Switch to light theme'
-			: theme.current === 'light'
-				? 'Switch to dark theme'
-				: 'Use system theme'}
-		title={theme.current === 'system'
-			? 'Switch to light theme'
-			: theme.current === 'light'
-				? 'Switch to dark theme'
-				: 'Use system theme'}
+		aria-label={themeMessage}
+		title={themeMessage}
 	>
 		{#if theme.current === 'system'}
 			<SunMoon size={18} />
