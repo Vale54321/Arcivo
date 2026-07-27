@@ -185,8 +185,11 @@
 		checksumming = false;
 
 		try {
-			const result = await api.uploadDocument(file, checksum, (pct) => {
-				uploadProgress = pct;
+			const result = await api.uploadDocument(file, {
+				checksum,
+				onProgress: (percent) => {
+					uploadProgress = percent;
+				}
 			});
 			if (result.status === 'duplicate') {
 				uploadResults = [...uploadResults, { msg: `"${file.name}" existiert bereits.`, type: 'info' }];

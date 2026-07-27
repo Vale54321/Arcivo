@@ -1,0 +1,226 @@
+import { PUBLIC_API_BASE_URL } from '$env/static/public';
+import type {
+	Document,
+	DocumentDetails,
+	SearchResult,
+	UploadDocumentOptions,
+	UploadResult
+} from './types';
+
+export type FetchLike = typeof globalThis.fetch;
+
+export interface ApiClientOptions {
+	baseUrl?: string;
+	fetch?: FetchLike;
+}
+
+interface ApiErrorPayload {
+	message?: string | string[];
+	error?: string;
+}
+
+const API_PATHS = {
+	documents: '/v1/document'
+} as const;
+
+export class ApiError extends Error {
+	readonly status: number;
+	readonly payload?: unknown;
+
+	constructor(status: number, message: string, payload?: unknown) {
+		super(message);
+		this.name = 'ApiError';
+		this.status = status;
+		this.payload = payload;
+	}
+}
+
+export class ArcivoApi {
+	private readonly baseUrl: string;
+	private readonly fetcher: FetchLike;
+
+	constructor({
+		baseUrl = PUBLIC_API_BASE_URL || '/api',
+		fetch = globalThis.fetch
+	}: ApiClientOptions = {}) {
+		this.baseUrl = baseUrl.replace(/\/+$/, '');
+		this.fetcher = fetch;
+	}
+
+	getDocuments(signal?: AbortSignal): Promise<Document[]> {
+		return this.request<Document[]>(API_PATHS.documents, { signal });
+	}
+
+	getDocument(id: string, signal?: AbortSignal): Promise<DocumentDetails> {
+		return this.request<DocumentDetails>(`${API_PATHS.documents}/${encodeURIComponent(id)}`, {
+			signal
+		});
+	}
+
+	searchDocuments(query: string, signal?: AbortSignal): Promise<SearchResult[]> {
+		const search = new URLSearchParams({ q: query });
+		return this.request<SearchResult[]>(`${API_PATHS.documents}/search?${search}`, { signal });
+	}
+
+	deleteDocument(id: string, signal?: AbortSignal): Promise<void> {
+		return this.request<void>(`${API_PATHS.documents}/${encodeURIComponent(id)}`, {
+			method: 'DELETE',
+			signal
+		});
+	}
+
+	uploadDocument(file: File, options: UploadDocumentOptions): Promise<UploadResult> {
+		const formData = new FormData();
+		formData.append('documentData', file);
+		formData.append(
+			'fileCreatedAt',
+			options.fileCreatedAt ?? new Date(file.lastModified).toISOString()
+		);
+
+		if (options.onProgress) {
+			return this.uploadWithProgress(file, formData, options);
+		}
+
+		return this.request<UploadResult>(API_PATHS.documents, {
+			method: 'POST',
+			headers: this.uploadHeaders(file, options.checksum),
+			body: formData,
+			signal: options.signal
+		});
+	}
+
+	thumbnailUrl(id: string): string {
+		return this.url(`${API_PATHS.documents}/${encodeURIComponent(id)}/thumbnail`);
+	}
+
+	archiveUrl(id: string): string {
+		return this.url(`${API_PATHS.documents}/${encodeURIComponent(id)}/archive`);
+	}
+
+	downloadUrl(id: string): string {
+		return this.url(`${API_PATHS.documents}/${encodeURIComponent(id)}/file`);
+	}
+
+	private async request<T>(path: string, init: RequestInit = {}): Promise<T> {
+		const headers = new Headers(init.headers);
+		headers.set('Accept', 'application/json');
+
+		const response = await this.fetcher(this.url(path), { ...init, headers });
+
+		if (!response.ok) {
+			throw await this.toApiError(response);
+		}
+
+		if (response.status === 204) {
+			return undefined as T;
+		}
+
+		return (await response.json()) as T;
+	}
+
+	private uploadWithProgress(
+		file: File,
+		body: FormData,
+		options: UploadDocumentOptions
+	): Promise<UploadResult> {
+		if (typeof XMLHttpRequest === 'undefined') {
+			return Promise.reject(new Error('Upload progress is only available in the browser'));
+		}
+
+		return new Promise<UploadResult>((resolve, reject) => {
+			const request = new XMLHttpRequest();
+			request.open('POST', this.url(API_PATHS.documents));
+
+			for (const [name, value] of Object.entries(this.uploadHeaders(file, options.checksum))) {
+				request.setRequestHeader(name, value);
+			}
+
+			request.upload.addEventListener('progress', (event) => {
+				if (event.lengthComputable) {
+					options.onProgress?.(Math.round((event.loaded / event.total) * 100));
+				}
+			});
+
+			request.addEventListener('load', () => {
+				const payload = this.parseTextPayload(request.responseText);
+
+				if (request.status >= 200 && request.status < 300) {
+					resolve(payload as UploadResult);
+					return;
+				}
+
+				reject(this.apiErrorFromPayload(request.status, request.statusText, payload));
+			});
+			request.addEventListener('error', () => reject(new Error('Network request failed')));
+			request.addEventListener('abort', () =>
+				reject(new DOMException('The upload was aborted', 'AbortError'))
+			);
+
+			if (options.signal) {
+				if (options.signal.aborted) {
+					request.abort();
+					return;
+				}
+				options.signal.addEventListener('abort', () => request.abort(), { once: true });
+			}
+
+			request.send(body);
+		});
+	}
+
+	private uploadHeaders(file: File, checksum: string): Record<string, string> {
+		return {
+			'x-arcivo-checksum': checksum,
+			'x-arcivo-filename': encodeURIComponent(file.name)
+		};
+	}
+
+	private url(path: string): string {
+		return `${this.baseUrl}/${path.replace(/^\/+/, '')}`;
+	}
+
+	private async toApiError(response: Response): Promise<ApiError> {
+		const contentType = response.headers.get('content-type') ?? '';
+		const payload = contentType.includes('application/json')
+			? await response.json().catch(() => undefined)
+			: await response.text().catch(() => undefined);
+
+		return this.apiErrorFromPayload(response.status, response.statusText, payload);
+	}
+
+	private apiErrorFromPayload(status: number, statusText: string, payload: unknown): ApiError {
+		const apiPayload = this.isApiErrorPayload(payload) ? payload : undefined;
+		const message = Array.isArray(apiPayload?.message)
+			? apiPayload.message.join(', ')
+			: (apiPayload?.message ?? apiPayload?.error ?? statusText ?? 'Request failed');
+
+		return new ApiError(status, message, payload);
+	}
+
+	private isApiErrorPayload(value: unknown): value is ApiErrorPayload {
+		if (typeof value !== 'object' || value === null) return false;
+
+		const payload = value as Record<string, unknown>;
+		const messageIsValid =
+			payload.message === undefined ||
+			typeof payload.message === 'string' ||
+			(Array.isArray(payload.message) && payload.message.every((item) => typeof item === 'string'));
+		const errorIsValid = payload.error === undefined || typeof payload.error === 'string';
+
+		return messageIsValid && errorIsValid;
+	}
+
+	private parseTextPayload(value: string): unknown {
+		if (!value) return undefined;
+
+		try {
+			return JSON.parse(value);
+		} catch {
+			return value;
+		}
+	}
+}
+
+export function createApiClient(options?: ApiClientOptions): ArcivoApi {
+	return new ArcivoApi(options);
+}
