@@ -1,7 +1,7 @@
 <script lang="ts">
 	import ArcivoLogo from './ArcivoLogo.svelte';
 	import { getSidebarContext } from '$lib/state/sidebar.svelte';
-	import { Files, X, type LucideIcon } from '@lucide/svelte';
+	import { Files, FolderOpen, Settings, Tag, Trash2, X, type LucideIcon } from '@lucide/svelte';
 	import { resolve } from '$app/paths';
 	import NavButton from './NavButton.svelte';
 
@@ -9,8 +9,9 @@
 
 	type MenuItem = {
 		name: string;
-		href: string;
+		href?: string;
 		icon: LucideIcon;
+		soon?: boolean;
 	};
 
 	const navItems: MenuItem[] = [
@@ -18,7 +19,10 @@
 			name: 'Dokumente',
 			icon: Files,
 			href: '/'
-		}
+		},
+		{ name: 'Sammlungen', icon: FolderOpen, soon: true },
+		{ name: 'Tags', icon: Tag, soon: true },
+		{ name: 'Papierkorb', icon: Trash2, soon: true }
 	];
 
 	function handleWindowKeydown(event: KeyboardEvent) {
@@ -57,8 +61,21 @@
 	</div>
 
 	<ul class="flex flex-1 flex-col gap-0.5 px-2">
-		{#each navItems as { name, href, icon } (href)}
-			<NavButton {name} {href} {icon} />
+		{#each navItems as item (item.name)}
+			<NavButton {...item} />
 		{/each}
+	</ul>
+
+	<ul class="flex flex-col gap-0.5 border-t border-neutral-200 px-2 pt-4 dark:border-neutral-800">
+		<NavButton name="Einstellungen" icon={Settings} soon />
+		<li class="mt-2 flex items-center gap-3 rounded-lg px-3 py-2">
+			<span
+				class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-neutral-200 text-xs font-semibold text-neutral-600 dark:bg-neutral-700 dark:text-neutral-200"
+				aria-hidden="true"
+			>
+				AD
+			</span>
+			<span class="text-sm text-neutral-500 dark:text-neutral-400">Admin</span>
+		</li>
 	</ul>
 </nav>
