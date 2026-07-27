@@ -30,4 +30,4 @@ async function bootstrap() {
   bootLogger.log(`Starting server on port ${port}`);
   await app.listen(port);
 }
-bootstrap();
+void bootstrap();

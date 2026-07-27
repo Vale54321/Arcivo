@@ -37,9 +37,7 @@ import { DocumentService } from 'src/services/document.service';
 @Controller('document')
 @ApiTags('documents')
 export class DocumentController {
-  constructor(
-    private service: DocumentService,
-  ) { }
+  constructor(private service: DocumentService) {}
 
   @Post()
   @ApiOperation({ summary: 'Upload a document' })
@@ -74,11 +72,9 @@ export class DocumentController {
   @ApiResponse({ status: 415, description: 'Unsupported document type' })
   @UseInterceptors(
     DocumentUploadInterceptor,
-    FileFieldsInterceptor([
-      { name: 'documentData', maxCount: 1 },
-    ], {
-      dest: './temp/uploads'
-    })
+    FileFieldsInterceptor([{ name: 'documentData', maxCount: 1 }], {
+      dest: './temp/uploads',
+    }),
   )
   async uploadDocument(
     @UploadedFiles() files: { documentData?: Express.Multer.File[] },
@@ -100,10 +96,15 @@ export class DocumentController {
 
   @Get('search')
   @ApiOperation({ summary: 'Search documents' })
-  @ApiQuery({ name: 'q', required: true, description: 'Filename or text search query' })
+  @ApiQuery({
+    name: 'q',
+    required: true,
+    description: 'Filename or text search query',
+  })
   @ApiResponse({ status: 200, type: [DocumentSearchResultDto] })
   async search(@Query('q') q: string) {
-    if (!q?.trim()) throw new BadRequestException('Query parameter "q" is required');
+    if (!q?.trim())
+      throw new BadRequestException('Query parameter "q" is required');
     return await this.service.searchDocuments(q.trim());
   }
 

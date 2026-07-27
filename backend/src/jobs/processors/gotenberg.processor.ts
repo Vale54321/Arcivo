@@ -11,41 +11,55 @@ import { QUEUES } from '../job.constants';
 
 @Processor(QUEUES.GOTENBERG_CONVERSION)
 export class GotenbergProcessor extends WorkerHost {
-    private readonly logger = new Logger(GotenbergProcessor.name);
+  private readonly logger = new Logger(GotenbergProcessor.name);
 
-    constructor(
-        private readonly documentRepository: DocumentRepository,
-        private readonly storageService: StorageService,
-        private readonly jobService: JobService,
-    ) {
-        super();
+  constructor(
+    private readonly documentRepository: DocumentRepository,
+    private readonly storageService: StorageService,
+    private readonly jobService: JobService,
+  ) {
+    super();
+  }
+
+  async process(job: Job<PdfConversionJobData>): Promise<void> {
+    const { documentId } = job.data;
+    this.logger.log(`Processing PDF conversion job ${job.id}: ${documentId}`);
+
+    try {
+      const doc = await this.documentRepository.findById(documentId);
+      if (!doc) throw new Error(`Document ${documentId} not found`);
+
+      const originalPath = await this.storageService.resolveFilePath(
+        documentId,
+        doc.extension,
+        StorageBucket.UPLOAD,
+      );
+
+      const buffer = await LibreOffice.convert({
+        files: [originalPath],
+        pdfa: PdfFormat.A_2b,
+      });
+
+      const archivePath = await this.storageService.writeBufferToBucket(
+        buffer,
+        documentId,
+        '.pdf',
+        StorageBucket.ARCHIVE,
+      );
+      this.logger.log(`Converted to PDF/A: ${archivePath}`);
+
+      await Promise.all([
+        this.jobService.addThumbnailJob(documentId),
+        this.jobService.addTextExtractionJob(documentId),
+      ]);
+    } catch (error: unknown) {
+      const jobError =
+        error instanceof Error ? error : new Error(String(error));
+      this.logger.error(
+        `Job ${job.id} failed: ${jobError.message}`,
+        jobError.stack,
+      );
+      throw jobError;
     }
-
-    async process(job: Job<PdfConversionJobData>): Promise<void> {
-        const { documentId } = job.data;
-        this.logger.log(`Processing PDF conversion job ${job.id}: ${documentId}`);
-        
-        try {
-            const doc = await this.documentRepository.findById(documentId);
-            if (!doc) throw new Error(`Document ${documentId} not found`);
-
-            const originalPath = await this.storageService.resolveFilePath(documentId, doc.extension, StorageBucket.UPLOAD);
-
-            const buffer = await LibreOffice.convert({
-                files: [originalPath],
-                pdfa: PdfFormat.A_2b,
-            });
-
-            const archivePath = await this.storageService.writeBufferToBucket(buffer, documentId, '.pdf', StorageBucket.ARCHIVE);
-            this.logger.log(`Converted to PDF/A: ${archivePath}`);
-
-            await Promise.all([
-                this.jobService.addThumbnailJob(documentId),
-                this.jobService.addTextExtractionJob(documentId),
-            ]);
-        } catch (error) {
-            this.logger.error(`Job ${job.id} failed: ${error.message}`, error.stack);
-            throw error;
-        }
-    }
+  }
 }

@@ -12,41 +12,41 @@ import { LoggingRepository } from 'src/repositories/logging.repository';
 import { TextExtractionProcessor } from './processors/text-extraction.processor';
 
 @Module({
-    imports: [
-        BullModule.forRootAsync({
-            inject: [ConfigService],
-            useFactory: (configService: ConfigService) => ({
-                connection: {
-                    host: configService.get<string>('REDIS_HOST'),
-                    port: configService.get<number>('REDIS_PORT'),
-                },
-            }),
-        }),
+  imports: [
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        connection: {
+          host: configService.get<string>('REDIS_HOST'),
+          port: configService.get<number>('REDIS_PORT'),
+        },
+      }),
+    }),
 
-        BullModule.registerQueue(
-            { name: QUEUES.GOTENBERG_CONVERSION },
-            { name: QUEUES.THUMBNAIL_PROCESSING },
-            { name: QUEUES.TEXT_EXTRACTION },
-        ),
-        StorageModule,
-    ],
-    controllers: [],
-    providers: [
-        JobService,
-        GotenbergProcessor,
-        ThumbnailProcessor,
-        TextExtractionProcessor, 
-        DocumentRepository,
-        LoggingRepository,
-    ],
-    exports: [BullModule, JobService],
+    BullModule.registerQueue(
+      { name: QUEUES.GOTENBERG_CONVERSION },
+      { name: QUEUES.THUMBNAIL_PROCESSING },
+      { name: QUEUES.TEXT_EXTRACTION },
+    ),
+    StorageModule,
+  ],
+  controllers: [],
+  providers: [
+    JobService,
+    GotenbergProcessor,
+    ThumbnailProcessor,
+    TextExtractionProcessor,
+    DocumentRepository,
+    LoggingRepository,
+  ],
+  exports: [BullModule, JobService],
 })
 export class JobModule implements OnModuleInit {
-    constructor(private readonly configService: ConfigService) { }
+  constructor(private readonly configService: ConfigService) {}
 
-    onModuleInit(): void {
-        Chromiumly.configure({
-            endpoint: this.configService.getOrThrow<string>('GOTENBERG_URL'),
-        });
-    }
+  onModuleInit(): void {
+    Chromiumly.configure({
+      endpoint: this.configService.getOrThrow<string>('GOTENBERG_URL'),
+    });
+  }
 }

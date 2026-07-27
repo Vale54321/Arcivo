@@ -1,9 +1,5 @@
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
-import {
-  FileMigrationProvider,
-  Kysely,
-  Migrator,
-} from 'kysely';
+import { FileMigrationProvider, Kysely, Migrator } from 'kysely';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { LoggingRepository } from 'src/repositories/logging.repository';
@@ -32,19 +28,21 @@ export class DatabaseMigrationService implements OnModuleInit {
 
     for (const result of results ?? []) {
       if (result.status === 'Success') {
-        this.logger.log(`Migration "${result.migrationName}" applied successfully`);
+        this.logger.log(
+          `Migration "${result.migrationName}" applied successfully`,
+        );
       } else if (result.status === 'Error') {
         this.logger.error(`Migration "${result.migrationName}" failed`);
       }
     }
 
     if (error) {
-      if (error instanceof Error) {
-        this.logger.error(error, error.stack);
-      } else {
-        this.logger.error(String(error));
-      }
-      throw error;
+      const migrationError =
+        error instanceof Error
+          ? error
+          : new Error('Database migration failed', { cause: error });
+      this.logger.error(migrationError, migrationError.stack);
+      throw migrationError;
     }
   }
 }

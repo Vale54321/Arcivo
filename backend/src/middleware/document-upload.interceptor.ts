@@ -6,10 +6,13 @@ import {
   NestInterceptor,
   UnsupportedMediaTypeException,
 } from '@nestjs/common';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 import { unlink } from 'node:fs/promises';
 import { of } from 'rxjs';
-import { DocumentStatus, type DocumentResponseDto } from 'src/dtos/document.response.dto';
+import {
+  DocumentStatus,
+  type DocumentResponseDto,
+} from 'src/dtos/document.response.dto';
 import { DocumentService } from 'src/services/document.service';
 import { getMimeType, isSupportedMimeType } from 'src/utils/file-type';
 
@@ -23,7 +26,7 @@ export class DocumentUploadInterceptor implements NestInterceptor {
 
   async intercept(context: ExecutionContext, next: CallHandler) {
     const req = context.switchToHttp().getRequest<DocumentUploadRequest>();
-    const res = context.switchToHttp().getResponse();
+    const res = context.switchToHttp().getResponse<Response>();
 
     const checksum: string = req.headers['x-arcivo-checksum'] as string;
     const filename: string = req.headers['x-arcivo-filename'] as string;
@@ -34,7 +37,9 @@ export class DocumentUploadInterceptor implements NestInterceptor {
 
     const mimeType = getMimeType(filename);
     if (!isSupportedMimeType(mimeType)) {
-      throw new UnsupportedMediaTypeException('Only documents (PDF, Office, Text) are allowed.');
+      throw new UnsupportedMediaTypeException(
+        'Only documents (PDF, Office, Text) are allowed.',
+      );
     }
 
     if (checksum) {
@@ -43,7 +48,10 @@ export class DocumentUploadInterceptor implements NestInterceptor {
         const tempPath = req.files?.documentData?.[0]?.path || undefined;
         if (tempPath) await this.deleteTempFile(tempPath);
         res.status(200);
-        return of<DocumentResponseDto>({ status: DocumentStatus.DUPLICATE, id: duplicate.id });
+        return of<DocumentResponseDto>({
+          status: DocumentStatus.DUPLICATE,
+          id: duplicate.id,
+        });
       }
     }
 

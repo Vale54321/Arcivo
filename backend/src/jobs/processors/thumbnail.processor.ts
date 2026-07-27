@@ -11,48 +11,71 @@ import { QUEUES } from '../job.constants';
 
 @Processor(QUEUES.THUMBNAIL_PROCESSING)
 export class ThumbnailProcessor extends WorkerHost {
-    private readonly logger = new Logger(ThumbnailProcessor.name);
-    private readonly poppler = new Poppler();
-    constructor(
-        private readonly documentRepository: DocumentRepository,
-        private readonly storageService: StorageService,
-    ) {
-        super();
+  private readonly logger = new Logger(ThumbnailProcessor.name);
+  private readonly poppler = new Poppler();
+  constructor(
+    private readonly documentRepository: DocumentRepository,
+    private readonly storageService: StorageService,
+  ) {
+    super();
+  }
+
+  async process(job: Job<ThumbnailJobData>): Promise<void> {
+    const { documentId } = job.data;
+    this.logger.log(`Processing thumbnail job ${job.id}: ${documentId}`);
+    try {
+      const { documentId } = job.data;
+
+      const doc = await this.documentRepository.findById(documentId);
+      if (!doc) throw new Error(`Document ${documentId} not found`);
+
+      const archiveFile = await this.storageService.resolveFilePath(
+        documentId,
+        '.pdf',
+        StorageBucket.ARCHIVE,
+      );
+      const pngThumbnail = await this.storageService.resolveFilePath(
+        documentId,
+        '',
+        StorageBucket.THUMBS,
+        true,
+      );
+      const webpThumbnail = await this.storageService.resolveFilePath(
+        documentId,
+        '.webp',
+        StorageBucket.THUMBS,
+        true,
+      );
+
+      const options = {
+        firstPageToConvert: 1,
+        lastPageToConvert: 1,
+        singleFile: true,
+        pngFile: true,
+      };
+
+      await this.poppler.pdfToPpm(archiveFile, pngThumbnail, options);
+
+      await sharp(`${pngThumbnail}.png`)
+        .webp({ quality: 80 })
+        .toFile(webpThumbnail);
+
+      await this.documentRepository.update(documentId, { hasThumbnail: true });
+      this.logger.log(`Thumbnail generated: ${webpThumbnail}`);
+    } catch (error: unknown) {
+      const thumbnailError =
+        error instanceof Error ? error : new Error(String(error));
+      this.logger.error(
+        `Failed to generate thumbnail for document ${documentId}: ${thumbnailError.message}`,
+        thumbnailError.stack,
+      );
+      throw thumbnailError;
+    } finally {
+      await this.storageService.deleteFromBucket(
+        documentId,
+        '.png',
+        StorageBucket.THUMBS,
+      );
     }
-
-    async process(job: Job<ThumbnailJobData>): Promise<void> {
-        const { documentId } = job.data;
-        this.logger.log(`Processing thumbnail job ${job.id}: ${documentId}`);
-        try {
-            const { documentId } = job.data;
-
-            const doc = await this.documentRepository.findById(documentId);
-            if (!doc) throw new Error(`Document ${documentId} not found`);
-
-            const archiveFile = await this.storageService.resolveFilePath(documentId, '.pdf', StorageBucket.ARCHIVE);
-            const pngThumbnail = await this.storageService.resolveFilePath(documentId, '', StorageBucket.THUMBS, true);
-            const webpThumbnail = await this.storageService.resolveFilePath(documentId, '.webp', StorageBucket.THUMBS, true);
-
-            const options = {
-                firstPageToConvert: 1,
-                lastPageToConvert: 1,
-                singleFile: true,
-                pngFile: true,
-            };
-
-            await this.poppler.pdfToPpm(archiveFile, pngThumbnail, options);
-
-            await sharp(`${pngThumbnail}.png`)
-                .webp({ quality: 80 })
-                .toFile(webpThumbnail);
-
-            await this.documentRepository.update(documentId, { hasThumbnail: true });
-            this.logger.log(`Thumbnail generated: ${webpThumbnail}`);
-        } catch (error) {
-            this.logger.error(`Failed to generate thumbnail for document ${documentId}: ${error.message}`, error.stack);
-            throw error;
-        } finally {
-            await this.storageService.deleteFromBucket(documentId, '.png', StorageBucket.THUMBS);
-        }
-    }
+  }
 }

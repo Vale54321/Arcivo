@@ -15,11 +15,11 @@ export class StorageService implements IStorageService {
   }
 
   async moveFileToBucket(
-        tempPath: string, 
-        documentId: string, 
-        extension: string,
-        bucket: StorageBucket
-    ): Promise<string> {
+    tempPath: string,
+    documentId: string,
+    extension: string,
+    bucket: StorageBucket,
+  ): Promise<string> {
     const finalPath = await this.resolveFilePath(documentId, extension, bucket);
     const finalDir = dirname(finalPath);
 
@@ -27,7 +27,7 @@ export class StorageService implements IStorageService {
       await mkdir(finalDir, { recursive: true });
       await copyFile(tempPath, finalPath);
       await unlink(tempPath);
-      
+
       this.logger.debug(`File stored successfully: ${finalPath}`);
       return finalPath;
     } catch (error) {
@@ -40,7 +40,7 @@ export class StorageService implements IStorageService {
     buffer: Buffer,
     documentId: string,
     extension: string,
-    bucket: StorageBucket
+    bucket: StorageBucket,
   ): Promise<string> {
     const finalPath = await this.resolveFilePath(documentId, extension, bucket);
     const finalDir = dirname(finalPath);
@@ -48,7 +48,7 @@ export class StorageService implements IStorageService {
     try {
       await mkdir(finalDir, { recursive: true });
       await writeFile(finalPath, buffer);
-      
+
       this.logger.debug(`Buffer stored successfully: ${finalPath}`);
       return finalPath;
     } catch (error) {
@@ -64,7 +64,12 @@ export class StorageService implements IStorageService {
     createDirectory = false,
   ): Promise<string> {
     const shard = this.getShardPath(documentId);
-    const filePath = join(this.libraryRoot, bucket, shard, `${documentId}${extension}`);
+    const filePath = join(
+      this.libraryRoot,
+      bucket,
+      shard,
+      `${documentId}${extension}`,
+    );
 
     if (createDirectory) {
       await mkdir(dirname(filePath), { recursive: true });
@@ -73,9 +78,13 @@ export class StorageService implements IStorageService {
     return filePath;
   }
 
-  async deleteFromBucket(documentId: string, extension: string, bucket: StorageBucket): Promise<void> {
+  async deleteFromBucket(
+    documentId: string,
+    extension: string,
+    bucket: StorageBucket,
+  ): Promise<void> {
     const fullPath = await this.resolveFilePath(documentId, extension, bucket);
-    
+
     await this.deleteFile(fullPath);
   }
 

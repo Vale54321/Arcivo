@@ -10,10 +10,10 @@ export interface IStorageService {
    * @returns The final absolute or relative path to the stored file.
    */
   moveFileToBucket(
-    tempPath: string, 
-    targetId: string, 
+    tempPath: string,
+    targetId: string,
     extension: string,
-    bucket: StorageBucket
+    bucket: StorageBucket,
   ): Promise<string>;
 
   /**
@@ -23,13 +23,17 @@ export interface IStorageService {
     buffer: Buffer,
     documentId: string,
     extension: string,
-    bucket: StorageBucket
-  ): Promise<string>
+    bucket: StorageBucket,
+  ): Promise<string>;
 
   /**
    * Deletes a file from the specified storage bucket.
    */
-  deleteFromBucket(documentId: string, extension: string, bucket: StorageBucket): Promise<void>;
+  deleteFromBucket(
+    documentId: string,
+    extension: string,
+    bucket: StorageBucket,
+  ): Promise<void>;
 
   /**
    * Resolves the full storage path for a file in the specified bucket.

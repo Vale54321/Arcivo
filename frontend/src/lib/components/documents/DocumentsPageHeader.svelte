@@ -29,12 +29,16 @@
 			{/if}
 		</p>
 	</div>
-	<div class="flex items-center gap-1 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 p-1">
+	<div
+		class="flex items-center gap-1 rounded-lg border border-neutral-200 bg-neutral-50 p-1 dark:border-neutral-800 dark:bg-neutral-900"
+	>
 		<button
 			onclick={() => onSetViewMode('list')}
 			title="Listenansicht"
 			class="flex items-center justify-center rounded-md p-1.5 transition-colors
-				{viewMode === 'list' ? 'bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 shadow-sm' : 'text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300'}"
+				{viewMode === 'list'
+				? 'bg-white text-neutral-900 shadow-sm dark:bg-neutral-700 dark:text-neutral-100'
+				: 'text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300'}"
 		>
 			<LayoutList size={16} />
 		</button>
@@ -42,7 +46,9 @@
 			onclick={() => onSetViewMode('grid')}
 			title="Gitteransicht"
 			class="flex items-center justify-center rounded-md p-1.5 transition-colors
-				{viewMode === 'grid' ? 'bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 shadow-sm' : 'text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300'}"
+				{viewMode === 'grid'
+				? 'bg-white text-neutral-900 shadow-sm dark:bg-neutral-700 dark:text-neutral-100'
+				: 'text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300'}"
 		>
 			<LayoutGrid size={16} />
 		</button>

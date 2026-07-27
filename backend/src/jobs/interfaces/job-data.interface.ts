@@ -1,11 +1,11 @@
 export interface PdfConversionJobData {
-    documentId: string;
+  documentId: string;
 }
 
 export interface ThumbnailJobData {
-    documentId: string;
+  documentId: string;
 }
 
 export interface TextExtractionJobData {
-    documentId: string;
+  documentId: string;
 }

@@ -11,7 +11,12 @@
 	import DocumentsPageHeader from '$lib/components/documents/DocumentsPageHeader.svelte';
 	import DragDropOverlay from '$lib/components/documents/DragDropOverlay.svelte';
 	import UploadToastPanel from '$lib/components/documents/UploadToastPanel.svelte';
-	import { formatSize, mimeIcon, mimeLabel, truncateFilename } from '$lib/components/documents/document-formatters';
+	import {
+		formatSize,
+		mimeIcon,
+		mimeLabel,
+		truncateFilename
+	} from '$lib/components/documents/document-formatters';
 
 	let fileInput: HTMLInputElement;
 	let docs = $state<Document[]>([]);
@@ -24,9 +29,11 @@
 	let activeSearch = $state('');
 	let searchResults = $state<SearchResult[]>([]);
 	let searchLoading = $state(false);
-	let viewMode = $state<'list' | 'grid'>((typeof localStorage !== 'undefined'
-		? (localStorage.getItem('arcivo:viewMode') as 'list' | 'grid')
-		: null) ?? 'grid');
+	let viewMode = $state<'list' | 'grid'>(
+		(typeof localStorage !== 'undefined'
+			? (localStorage.getItem('arcivo:viewMode') as 'list' | 'grid')
+			: null) ?? 'grid'
+	);
 	let confirmOpen = $state(false);
 	let confirmDoc = $state<Document | null>(null);
 	let deleteLoading = $state(false);
@@ -164,7 +171,9 @@
 	async function computeChecksum(file: File): Promise<string> {
 		const buffer = await file.arrayBuffer();
 		return new Promise<string>((resolve, reject) => {
-			const worker = new Worker(new URL('$lib/checksum.worker.ts', import.meta.url), { type: 'module' });
+			const worker = new Worker(new URL('$lib/checksum.worker.ts', import.meta.url), {
+				type: 'module'
+			});
 			worker.onmessage = (e: MessageEvent<string>) => {
 				worker.terminate();
 				resolve(e.data);
@@ -192,13 +201,22 @@
 				}
 			});
 			if (result.status === 'duplicate') {
-				uploadResults = [...uploadResults, { msg: `"${file.name}" existiert bereits.`, type: 'info' }];
+				uploadResults = [
+					...uploadResults,
+					{ msg: `"${file.name}" existiert bereits.`, type: 'info' }
+				];
 			} else {
-				uploadResults = [...uploadResults, { msg: `"${file.name}" erfolgreich hochgeladen!`, type: 'success' }];
+				uploadResults = [
+					...uploadResults,
+					{ msg: `"${file.name}" erfolgreich hochgeladen!`, type: 'success' }
+				];
 			}
 			loadDocuments();
 		} catch (error) {
-			const msg = error instanceof ApiError ? `Fehler ${error.status}: ${error.message}` : (error as Error).message;
+			const msg =
+				error instanceof ApiError
+					? `Fehler ${error.status}: ${error.message}`
+					: (error as Error).message;
 			uploadResults = [...uploadResults, { msg, type: 'error' }];
 		} finally {
 			checksumming = false;
@@ -250,7 +268,7 @@
 />
 
 <DocumentsPageHeader
-	activeSearch={activeSearch}
+	{activeSearch}
 	documentCount={docs.length}
 	resultCount={searchResults.length}
 	{viewMode}
@@ -259,7 +277,7 @@
 
 <input type="file" multiple bind:this={fileInput} onchange={onFileChange} class="sr-only" />
 
-<ActiveSearchBanner activeSearch={activeSearch} {searchLoading} onClear={clearSearch} />
+<ActiveSearchBanner {activeSearch} {searchLoading} onClear={clearSearch} />
 
 <svelte:window
 	ondragenter={onPageDragEnter}
@@ -268,8 +286,12 @@
 	ondrop={onPageDrop}
 />
 
-<div class="flex flex-col min-h-0 {viewMode === 'list' ? 'flex-1' : ''}">
-	<DragDropOverlay visible={dragOver} onFilesDropped={uploadFiles} onClose={() => (dragOver = false)} />
+<div class="flex min-h-0 flex-col {viewMode === 'list' ? 'flex-1' : ''}">
+	<DragDropOverlay
+		visible={dragOver}
+		onFilesDropped={uploadFiles}
+		onClose={() => (dragOver = false)}
+	/>
 
 	{#if viewMode === 'list'}
 		<DocumentsList
@@ -321,10 +343,4 @@
 	onDismiss={removeUploadResult}
 />
 
-<DocumentInfoModal
-	{infoDoc}
-	{mimeIcon}
-	{mimeLabel}
-	{formatSize}
-	onClose={() => (infoDoc = null)}
-/>
+<DocumentInfoModal {infoDoc} {mimeIcon} {mimeLabel} {formatSize} onClose={() => (infoDoc = null)} />

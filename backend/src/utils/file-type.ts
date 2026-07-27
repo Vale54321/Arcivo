@@ -15,14 +15,8 @@ const MIME_TYPES = {
     'application/vnd.openxmlformats-officedocument.presentationml.presentation',
     'application/vnd.oasis.opendocument.presentation',
   ],
-  pdf: [
-    'application/pdf'
-  ],
-  text: [
-    'text/plain', 
-    'text/markdown', 
-    'text/csv'
-  ],
+  pdf: ['application/pdf'],
+  text: ['text/plain', 'text/markdown', 'text/csv'],
 };
 
 const ALL_SUPPORTED_TYPES = Object.values(MIME_TYPES).flat();
@@ -31,8 +25,12 @@ export const getMimeType = (filename: string): string => {
   return mime.getType(filename) ?? 'application/octet-stream';
 };
 
-export const isOfficeMimeType = (mimeType: string): boolean => MIME_TYPES.office.includes(mimeType);
-export const isPdfMimeType = (mimeType: string): boolean => MIME_TYPES.pdf.includes(mimeType);
-export const isTextMimeType = (mimeType: string): boolean => MIME_TYPES.text.includes(mimeType);
+export const isOfficeMimeType = (mimeType: string): boolean =>
+  MIME_TYPES.office.includes(mimeType);
+export const isPdfMimeType = (mimeType: string): boolean =>
+  MIME_TYPES.pdf.includes(mimeType);
+export const isTextMimeType = (mimeType: string): boolean =>
+  MIME_TYPES.text.includes(mimeType);
 
-export const isSupportedMimeType = (mimeType: string): boolean => ALL_SUPPORTED_TYPES.includes(mimeType);
+export const isSupportedMimeType = (mimeType: string): boolean =>
+  ALL_SUPPORTED_TYPES.includes(mimeType);

@@ -27,8 +27,8 @@
 
 	// ── Helpers ───────────────────────────────────────────────────────────────
 	function mimeIcon(mimeType: string) {
-		if (mimeType.startsWith('image/'))                            return FileImage;
-		if (mimeType.includes('pdf'))                                 return FileText;
+		if (mimeType.startsWith('image/')) return FileImage;
+		if (mimeType.includes('pdf')) return FileText;
 		if (mimeType.includes('sheet') || mimeType.includes('excel')) return FileSpreadsheet;
 		return File;
 	}
@@ -50,7 +50,11 @@
 
 	async function handleSearch() {
 		const q = query.trim();
-		if (!q) { results = []; error = ''; return; }
+		if (!q) {
+			results = [];
+			error = '';
+			return;
+		}
 
 		clearTimeout(debounceTimer);
 		debounceTimer = setTimeout(async () => {
@@ -59,7 +63,8 @@
 			try {
 				results = await api.searchDocuments(q);
 			} catch (err) {
-				error = err instanceof ApiError ? `Fehler ${err.status}: ${err.message}` : 'Unbekannter Fehler';
+				error =
+					err instanceof ApiError ? `Fehler ${err.status}: ${err.message}` : 'Unbekannter Fehler';
 				results = [];
 			} finally {
 				loading = false;
@@ -103,35 +108,40 @@
 {#if searchOpen}
 	<!-- Backdrop -->
 	<button
-		class="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm cursor-default"
+		class="fixed inset-0 z-40 cursor-default bg-black/20 backdrop-blur-sm"
 		onclick={close}
 		aria-label="Close search"
 	></button>
 
 	<!-- Dialog -->
-	<div class="fixed left-1/2 top-1/4 z-50 w-full max-w-lg -translate-x-1/2 rounded-xl border border-red-300 dark:border-red-900 bg-white dark:bg-neutral-900 shadow-2xl">
-
+	<div
+		class="fixed top-1/4 left-1/2 z-50 w-full max-w-lg -translate-x-1/2 rounded-xl border border-red-300 bg-white shadow-2xl dark:border-red-900 dark:bg-neutral-900"
+	>
 		<!-- Input row -->
-		<div class="flex items-center gap-3 border-b border-neutral-200 dark:border-neutral-700 px-4 py-3">
+		<div
+			class="flex items-center gap-3 border-b border-neutral-200 px-4 py-3 dark:border-neutral-700"
+		>
 			<Search size={16} class="shrink-0 text-neutral-400" />
 			<input
 				bind:this={searchInput}
 				bind:value={query}
-			onkeydown={(e) => {
-				if (e.key === 'Enter' && query.trim()) {
-					searchQuery.set(query.trim());
-					close();
-				}
-			}}
-			oninput={handleSearch}
+				onkeydown={(e) => {
+					if (e.key === 'Enter' && query.trim()) {
+						searchQuery.set(query.trim());
+						close();
+					}
+				}}
+				oninput={handleSearch}
 				type="text"
 				placeholder="Dokument suchen..."
-				class="flex-1 bg-transparent text-sm text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 outline-none"
+				class="flex-1 bg-transparent text-sm text-neutral-900 placeholder-neutral-400 outline-none dark:text-neutral-100 dark:placeholder-neutral-500"
 			/>
 			{#if loading}
-				<span class="shrink-0 text-xs text-neutral-400 animate-pulse">...</span>
+				<span class="shrink-0 animate-pulse text-xs text-neutral-400">...</span>
 			{/if}
-			<kbd class="hidden sm:inline-flex items-center rounded border border-neutral-300 dark:border-neutral-600 bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 text-xs text-neutral-400 font-mono">
+			<kbd
+				class="hidden items-center rounded border border-neutral-300 bg-neutral-100 px-1.5 py-0.5 font-mono text-xs text-neutral-400 sm:inline-flex dark:border-neutral-600 dark:bg-neutral-800"
+			>
 				Esc
 			</kbd>
 		</div>
@@ -139,27 +149,33 @@
 		<!-- Results -->
 		{#if query.trim() === ''}
 			{#if recentDocs.length > 0}
-			<div class="py-2">
-				<p class="px-4 pb-1 pt-2 text-xs font-medium uppercase tracking-wider text-neutral-400">Zuletzt geöffnet</p>
-				<ul>
-					{#each recentDocs as doc (doc.id)}
-						<li>
-							<button
-								onclick={() => openDoc(doc)}
-								class="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors"
-							>
-								<span class="shrink-0 text-neutral-400">
-									<svelte:component this={mimeIcon(doc.mimeType)} size={16} />
-								</span>
-								<span class="flex-1 truncate text-sm text-neutral-800 dark:text-neutral-100">{doc.name}</span>
-								<span class="shrink-0 text-xs text-neutral-400">{formatSize(doc.size)}</span>
-							</button>
-						</li>
-					{/each}
-				</ul>
-			</div>
+				<div class="py-2">
+					<p class="px-4 pt-2 pb-1 text-xs font-medium tracking-wider text-neutral-400 uppercase">
+						Zuletzt geöffnet
+					</p>
+					<ul>
+						{#each recentDocs as doc (doc.id)}
+							<li>
+								<button
+									onclick={() => openDoc(doc)}
+									class="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800"
+								>
+									<span class="shrink-0 text-neutral-400">
+										<svelte:component this={mimeIcon(doc.mimeType)} size={16} />
+									</span>
+									<span class="flex-1 truncate text-sm text-neutral-800 dark:text-neutral-100"
+										>{doc.name}</span
+									>
+									<span class="shrink-0 text-xs text-neutral-400">{formatSize(doc.size)}</span>
+								</button>
+							</li>
+						{/each}
+					</ul>
+				</div>
 			{:else}
-				<div class="px-4 py-8 text-center text-sm text-neutral-400">Tippe um Dokumente zu durchsuchen…</div>
+				<div class="px-4 py-8 text-center text-sm text-neutral-400">
+					Tippe um Dokumente zu durchsuchen…
+				</div>
 			{/if}
 		{:else if error}
 			<div class="px-4 py-8 text-center text-sm text-red-500 dark:text-red-400">{error}</div>
@@ -173,14 +189,19 @@
 					<li>
 						<button
 							onclick={() => openDoc(doc)}
-							class="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors"
+							class="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800"
 						>
 							<span class="shrink-0 text-neutral-400">
 								<svelte:component this={mimeIcon(doc.mimeType)} size={16} />
 							</span>
-							<span class="flex-1 truncate text-sm text-neutral-800 dark:text-neutral-100">{doc.name}</span>
+							<span class="flex-1 truncate text-sm text-neutral-800 dark:text-neutral-100"
+								>{doc.name}</span
+							>
 							{#if doc.matchType === 'content'}
-								<span class="shrink-0 text-xs px-1.5 py-0.5 rounded font-mono bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400">Inhalt</span>
+								<span
+									class="shrink-0 rounded bg-red-100 px-1.5 py-0.5 font-mono text-xs text-red-600 dark:bg-red-950 dark:text-red-400"
+									>Inhalt</span
+								>
 							{/if}
 							<span class="shrink-0 text-xs text-neutral-400">{formatSize(doc.size)}</span>
 						</button>
@@ -188,6 +209,5 @@
 				{/each}
 			</ul>
 		{/if}
-
 	</div>
 {/if}
