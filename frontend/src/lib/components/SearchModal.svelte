@@ -142,7 +142,7 @@
 			<div class="py-2">
 				<p class="px-4 pb-1 pt-2 text-xs font-medium uppercase tracking-wider text-neutral-400">Zuletzt geöffnet</p>
 				<ul>
-					{#each recentDocs as doc}
+					{#each recentDocs as doc (doc.id)}
 						<li>
 							<button
 								onclick={() => openDoc(doc)}
@@ -169,7 +169,7 @@
 			</div>
 		{:else}
 			<ul class="max-h-72 overflow-y-auto py-2">
-				{#each results as doc}
+				{#each results as doc (doc.id)}
 					<li>
 						<button
 							onclick={() => openDoc(doc)}
