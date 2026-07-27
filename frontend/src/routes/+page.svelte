@@ -1,2 +1,327 @@
-<h1>Welcome to SvelteKit</h1>
-<p>Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the documentation</p>
+<script lang="ts">
+	import { onMount } from 'svelte';
+	import { api, ApiError, type Document, type SearchResult } from '$lib/api';
+	import { uploadOpen, searchQuery } from '$lib/stores';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import ActiveSearchBanner from '$lib/components/documents/ActiveSearchBanner.svelte';
+	import DocumentContextMenu from '$lib/components/documents/DocumentContextMenu.svelte';
+	import DocumentInfoModal from '$lib/components/documents/DocumentInfoModal.svelte';
+	import DocumentsGrid from '$lib/components/documents/DocumentsGrid.svelte';
+	import DocumentsList from '$lib/components/documents/DocumentsList.svelte';
+	import DocumentsPageHeader from '$lib/components/documents/DocumentsPageHeader.svelte';
+	import DragDropOverlay from '$lib/components/documents/DragDropOverlay.svelte';
+	import UploadToastPanel from '$lib/components/documents/UploadToastPanel.svelte';
+	import { formatSize, mimeIcon, mimeLabel, truncateFilename } from '$lib/components/documents/document-formatters';
+
+	let fileInput: HTMLInputElement;
+	let docs = $state<Document[]>([]);
+	let loading = $state(true);
+	let pendingFile = $state<string | null>(null);
+	let checksumming = $state(false);
+	let uploadProgress = $state(0);
+	let uploadResults = $state<{ msg: string; type: 'success' | 'error' | 'info' }[]>([]);
+	let dragOver = $state(false);
+	let activeSearch = $state('');
+	let searchResults = $state<SearchResult[]>([]);
+	let searchLoading = $state(false);
+	let viewMode = $state<'list' | 'grid'>((typeof localStorage !== 'undefined'
+		? (localStorage.getItem('arcivo:viewMode') as 'list' | 'grid')
+		: null) ?? 'grid');
+	let confirmOpen = $state(false);
+	let confirmDoc = $state<Document | null>(null);
+	let deleteLoading = $state(false);
+	let ctxMenu = $state<{ x: number; y: number; doc: Document } | null>(null);
+	let infoDoc = $state<Document | null>(null);
+
+	let displayDocs = $derived(activeSearch ? searchResults : docs);
+
+	$effect(() => {
+		if ($searchQuery) runSearch($searchQuery);
+	});
+
+	$effect(() => {
+		if ($uploadOpen) {
+			fileInput?.click();
+			uploadOpen.set(false);
+		}
+	});
+
+	onMount(() => {
+		loadDocuments();
+	});
+
+	async function runSearch(query: string) {
+		activeSearch = query;
+		searchLoading = true;
+		try {
+			searchResults = await api.searchDocuments(query);
+		} catch {
+			searchResults = [];
+		} finally {
+			searchLoading = false;
+		}
+	}
+
+	function clearSearch() {
+		activeSearch = '';
+		searchResults = [];
+		searchQuery.set('');
+	}
+
+	function setViewMode(mode: 'list' | 'grid') {
+		viewMode = mode;
+		localStorage.setItem('arcivo:viewMode', mode);
+	}
+
+	function onPageDragEnter(e: DragEvent) {
+		if (e.dataTransfer?.types.includes('Files')) dragOver = true;
+	}
+
+	function onPageDragLeave(e: DragEvent) {
+		if ((e.target as HTMLElement)?.nodeName === 'HTML' || (e.clientX === 0 && e.clientY === 0)) {
+			dragOver = false;
+		}
+	}
+
+	function onPageDragOver(e: DragEvent) {
+		e.preventDefault();
+	}
+
+	function onPageDrop(e: DragEvent) {
+		e.preventDefault();
+		dragOver = false;
+		const files = e.dataTransfer?.files;
+		if (files?.length) uploadFiles(files);
+	}
+
+	async function loadDocuments() {
+		loading = true;
+		try {
+			docs = await api.getDocuments();
+		} catch (error) {
+			console.error('Fehler beim Laden:', error);
+		} finally {
+			loading = false;
+		}
+	}
+
+	async function triggerDownload(url: string, filename: string) {
+		const response = await fetch(url);
+		const blob = await response.blob();
+		const anchor = document.createElement('a');
+		anchor.href = URL.createObjectURL(blob);
+		anchor.download = filename;
+		anchor.click();
+		URL.revokeObjectURL(anchor.href);
+	}
+
+	function openArchive(doc: Document) {
+		window.open(api.archiveUrl(doc.id), '_blank');
+	}
+
+	function downloadArchive(doc: Document) {
+		triggerDownload(api.archiveUrl(doc.id), doc.name + '.pdf');
+	}
+
+	function downloadOriginal(doc: Document) {
+		triggerDownload(api.downloadUrl(doc.id), doc.name);
+	}
+
+	function promptDelete(doc: Document, e: MouseEvent) {
+		e.stopPropagation();
+		confirmDoc = doc;
+		confirmOpen = true;
+	}
+
+	function promptDeleteFromContext(doc: Document) {
+		confirmDoc = doc;
+		confirmOpen = true;
+	}
+
+	async function confirmDelete() {
+		if (!confirmDoc) return;
+		deleteLoading = true;
+		try {
+			await api.deleteDocument(confirmDoc.id);
+			docs = docs.filter((doc) => doc.id !== confirmDoc!.id);
+			if (activeSearch) searchResults = searchResults.filter((doc) => doc.id !== confirmDoc!.id);
+			confirmOpen = false;
+			confirmDoc = null;
+		} catch (error) {
+			console.error('Löschen fehlgeschlagen:', error);
+		} finally {
+			deleteLoading = false;
+		}
+	}
+
+	async function uploadFiles(files: FileList) {
+		uploadResults = [];
+		for (const file of Array.from(files)) {
+			await uploadFile(file);
+		}
+	}
+
+	async function computeChecksum(file: File): Promise<string> {
+		const buffer = await file.arrayBuffer();
+		return new Promise<string>((resolve, reject) => {
+			const worker = new Worker(new URL('$lib/checksum.worker.ts', import.meta.url), { type: 'module' });
+			worker.onmessage = (e: MessageEvent<string>) => {
+				worker.terminate();
+				resolve(e.data);
+			};
+			worker.onerror = (e) => {
+				worker.terminate();
+				reject(e);
+			};
+			worker.postMessage(buffer, [buffer]);
+		});
+	}
+
+	async function uploadFile(file: File) {
+		pendingFile = file.name;
+		uploadProgress = 0;
+		checksumming = true;
+		const checksum = await computeChecksum(file);
+		checksumming = false;
+
+		try {
+			const result = await api.uploadDocument(file, checksum, (pct) => {
+				uploadProgress = pct;
+			});
+			if (result.status === 'duplicate') {
+				uploadResults = [...uploadResults, { msg: `"${file.name}" existiert bereits.`, type: 'info' }];
+			} else {
+				uploadResults = [...uploadResults, { msg: `"${file.name}" erfolgreich hochgeladen!`, type: 'success' }];
+			}
+			loadDocuments();
+		} catch (error) {
+			const msg = error instanceof ApiError ? `Fehler ${error.status}: ${error.message}` : (error as Error).message;
+			uploadResults = [...uploadResults, { msg, type: 'error' }];
+		} finally {
+			checksumming = false;
+			pendingFile = null;
+			uploadProgress = 0;
+		}
+	}
+
+	function onFileChange() {
+		if (fileInput?.files?.length) uploadFiles(fileInput.files);
+	}
+
+	function openContextMenu(e: MouseEvent, doc: Document) {
+		e.preventDefault();
+		e.stopPropagation();
+		ctxMenu = { x: e.clientX, y: e.clientY, doc };
+	}
+
+	function closeContextMenu() {
+		ctxMenu = null;
+	}
+
+	async function openInfo(doc: Document) {
+		infoDoc = doc;
+		try {
+			const full = await api.getDocument(doc.id);
+			infoDoc = full;
+		} catch {
+			infoDoc = doc;
+		}
+	}
+
+	function removeUploadResult(index: number) {
+		uploadResults = uploadResults.filter((_, currentIndex) => currentIndex !== index);
+	}
+</script>
+
+<ConfirmDialog
+	bind:open={confirmOpen}
+	title="Dokument löschen"
+	message={confirmDoc ? `„${confirmDoc.name}" wird unwiderruflich gelöscht.` : ''}
+	confirmLabel="Löschen"
+	loading={deleteLoading}
+	onConfirm={confirmDelete}
+	onCancel={() => {
+		confirmOpen = false;
+		confirmDoc = null;
+	}}
+/>
+
+<DocumentsPageHeader
+	activeSearch={activeSearch}
+	documentCount={docs.length}
+	resultCount={searchResults.length}
+	{viewMode}
+	onSetViewMode={setViewMode}
+/>
+
+<input type="file" multiple bind:this={fileInput} onchange={onFileChange} class="sr-only" />
+
+<ActiveSearchBanner activeSearch={activeSearch} {searchLoading} onClear={clearSearch} />
+
+<svelte:window
+	ondragenter={onPageDragEnter}
+	ondragleave={onPageDragLeave}
+	ondragover={onPageDragOver}
+	ondrop={onPageDrop}
+/>
+
+<div class="flex flex-col min-h-0 {viewMode === 'list' ? 'flex-1' : ''}">
+	<DragDropOverlay visible={dragOver} onFilesDropped={uploadFiles} onClose={() => (dragOver = false)} />
+
+	{#if viewMode === 'list'}
+		<DocumentsList
+			docs={displayDocs}
+			{loading}
+			{activeSearch}
+			{mimeIcon}
+			{mimeLabel}
+			{formatSize}
+			thumbnailUrl={(id) => api.thumbnailUrl(id)}
+			onOpenArchive={openArchive}
+			onOpenContextMenu={openContextMenu}
+			onDownloadArchive={downloadArchive}
+			onDownloadOriginal={downloadOriginal}
+			onDelete={promptDelete}
+		/>
+	{:else}
+		<DocumentsGrid
+			docs={displayDocs}
+			{loading}
+			{activeSearch}
+			{mimeIcon}
+			{formatSize}
+			{truncateFilename}
+			thumbnailUrl={(id) => api.thumbnailUrl(id)}
+			onOpenArchive={openArchive}
+			onOpenContextMenu={openContextMenu}
+			onDownloadArchive={downloadArchive}
+			onDownloadOriginal={downloadOriginal}
+			onDelete={promptDelete}
+		/>
+	{/if}
+</div>
+
+<DocumentContextMenu
+	state={ctxMenu}
+	onClose={closeContextMenu}
+	onOpenArchive={openArchive}
+	onDownloadOriginal={downloadOriginal}
+	onOpenInfo={openInfo}
+	onDelete={promptDeleteFromContext}
+/>
+
+<UploadToastPanel
+	{pendingFile}
+	{checksumming}
+	{uploadProgress}
+	{uploadResults}
+	onDismiss={removeUploadResult}
+/>
+
+<DocumentInfoModal
+	{infoDoc}
+	{mimeIcon}
+	{mimeLabel}
+	{formatSize}
+	onClose={() => (infoDoc = null)}
+/>
