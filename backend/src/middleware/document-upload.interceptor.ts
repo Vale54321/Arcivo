@@ -15,9 +15,11 @@ import {
 } from 'src/dtos/document.response.dto';
 import { DocumentService } from 'src/services/document.service';
 import { getMimeType, isSupportedMimeType } from 'src/utils/file-type';
+import { decodeUploadFilename } from 'src/utils/filename';
 
 export type DocumentUploadRequest = Request & {
   files?: { documentData?: Express.Multer.File[] };
+  arcivoFilename?: string;
 };
 
 @Injectable()
@@ -29,11 +31,19 @@ export class DocumentUploadInterceptor implements NestInterceptor {
     const res = context.switchToHttp().getResponse<Response>();
 
     const checksum: string = req.headers['x-arcivo-checksum'] as string;
-    const filename: string = req.headers['x-arcivo-filename'] as string;
+    const rawFilename: string = req.headers['x-arcivo-filename'] as string;
 
-    if (!filename) {
+    if (!rawFilename) {
       throw new BadRequestException('Missing x-arcivo-filename header');
     }
+
+    const filename = decodeUploadFilename(rawFilename);
+    if (!filename) {
+      throw new BadRequestException(
+        'x-arcivo-filename must be a URL-encoded UTF-8 file name',
+      );
+    }
+    req.arcivoFilename = filename;
 
     const mimeType = getMimeType(filename);
     if (!isSupportedMimeType(mimeType)) {

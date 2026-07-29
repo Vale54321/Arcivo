@@ -8,6 +8,7 @@ import {
   Header,
   Param,
   Post,
+  Req,
   StreamableFile,
   UploadedFiles,
   UseInterceptors,
@@ -31,8 +32,12 @@ import {
   DocumentResponseDto,
   DocumentSearchResultDto,
 } from 'src/dtos/document.response.dto';
-import { DocumentUploadInterceptor } from 'src/middleware/document-upload.interceptor';
+import {
+  DocumentUploadInterceptor,
+  type DocumentUploadRequest,
+} from 'src/middleware/document-upload.interceptor';
 import { DocumentService } from 'src/services/document.service';
+import { contentDisposition } from 'src/utils/filename';
 
 @Controller('document')
 @ApiTags('documents')
@@ -79,12 +84,16 @@ export class DocumentController {
   async uploadDocument(
     @UploadedFiles() files: { documentData?: Express.Multer.File[] },
     @Body() dto: DocumentUploadDto,
+    @Req() req: DocumentUploadRequest,
   ): Promise<DocumentResponseDto> {
     const file = files.documentData?.[0];
 
     if (!file) throw new BadRequestException('No file uploaded');
+    if (!req.arcivoFilename) {
+      throw new BadRequestException('Missing x-arcivo-filename header');
+    }
 
-    return this.service.uploadDocument(dto, file);
+    return this.service.uploadDocument(dto, file, req.arcivoFilename);
   }
 
   @Get()
@@ -126,7 +135,7 @@ export class DocumentController {
 
     return new StreamableFile(stream, {
       type: documentFile.mimeType,
-      disposition: `inline; filename="${documentFile.name}"`,
+      disposition: contentDisposition(documentFile.name),
     });
   }
 
@@ -139,7 +148,7 @@ export class DocumentController {
 
     return new StreamableFile(stream, {
       type: 'application/pdf',
-      disposition: `inline; filename="${archiveFile.name}"`,
+      disposition: contentDisposition(archiveFile.name),
     });
   }
 

@@ -33,11 +33,12 @@ export class DocumentService extends BaseService {
   async uploadDocument(
     dto: DocumentUploadDto,
     file: Express.Multer.File,
+    filename: string,
   ): Promise<DocumentResponseDto> {
-    this.logger.log(`Processing document: ${file.originalname}`);
+    this.logger.log(`Processing document: ${filename}`);
 
-    const mimeType = getMimeType(file.originalname);
-    const extension = extname(file.originalname).toLowerCase();
+    const mimeType = getMimeType(filename);
+    const extension = extname(filename).toLowerCase();
 
     const checksum = await this.fileHashService.getSha1(file.path);
     const fileDate = dto.fileCreatedAt
@@ -45,7 +46,7 @@ export class DocumentService extends BaseService {
       : new Date();
 
     this.logger.debug(`Temp name: ${file.path}`);
-    this.logger.debug(`File name: ${file.originalname}`);
+    this.logger.debug(`File name: ${filename}`);
     this.logger.debug(`File MIME type: ${mimeType}`);
     this.logger.debug(`File extension: ${extension}`);
     this.logger.debug(`File size: ${file.size} bytes`);
@@ -58,7 +59,7 @@ export class DocumentService extends BaseService {
     );
     if (duplicate) {
       this.logger.log(
-        `Duplicate checksum hit for ${file.originalname}: ${duplicate.id}`,
+        `Duplicate checksum hit for ${filename}: ${duplicate.id}`,
       );
       await this.deleteTempFile(file.path);
       return { status: DocumentStatus.DUPLICATE, id: duplicate.id };
@@ -67,7 +68,7 @@ export class DocumentService extends BaseService {
     try {
       const documentEntry = await this.documentRepository.create({
         checksum: checksum,
-        name: file.originalname,
+        name: filename,
         extension: extension,
         size: file.size,
         mimeType: mimeType,
@@ -95,13 +96,11 @@ export class DocumentService extends BaseService {
 
       if (error instanceof Error) {
         this.logger.error(
-          `Failed to process ${file.originalname}: ${error.message}`,
+          `Failed to process ${filename}: ${error.message}`,
           error.stack,
         );
       } else {
-        this.logger.error(
-          `Failed to process ${file.originalname}: ${String(error)}`,
-        );
+        this.logger.error(`Failed to process ${filename}: ${String(error)}`);
       }
       throw error;
     }
