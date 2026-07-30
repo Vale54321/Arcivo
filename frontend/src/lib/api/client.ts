@@ -20,7 +20,8 @@ interface ApiErrorPayload {
 }
 
 const API_PATHS = {
-	documents: '/v1/document'
+	documents: '/v1/document',
+	events: '/v1/events'
 } as const;
 
 export class ApiError extends Error {
@@ -99,6 +100,10 @@ export class ArcivoApi {
 
 	downloadUrl(id: string): string {
 		return this.url(`${API_PATHS.documents}/${encodeURIComponent(id)}/file`);
+	}
+
+	eventStreamUrl(): string {
+		return this.url(API_PATHS.events);
 	}
 
 	private async request<T>(path: string, init: RequestInit = {}): Promise<T> {

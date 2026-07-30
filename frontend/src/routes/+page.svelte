@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { api, ApiError, type Document, type SearchResult } from '$lib/api';
 	import { uploadOpen, searchQuery } from '$lib/stores';
+	import { events } from '$lib/events';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import ActiveSearchBanner from '$lib/components/documents/ActiveSearchBanner.svelte';
 	import DocumentContextMenu from '$lib/components/documents/DocumentContextMenu.svelte';
@@ -39,6 +40,7 @@
 	let deleteLoading = $state(false);
 	let ctxMenu = $state<{ x: number; y: number; doc: Document } | null>(null);
 	let infoDoc = $state<Document | null>(null);
+	let thumbnailStates = $state<Record<string, 'pending' | 'failed'>>({});
 
 	let displayDocs = $derived(activeSearch ? searchResults : docs);
 
@@ -54,8 +56,37 @@
 	});
 
 	onMount(() => {
-		loadDocuments();
+		void loadDocuments();
+
+		const unsubscribeGenerated = events.on('document.thumbnail.generated', ({ documentId }) => {
+			clearThumbnailState(documentId);
+			docs = markThumbnailReady(docs, documentId);
+			searchResults = markThumbnailReady(searchResults, documentId);
+			if (infoDoc?.id === documentId) {
+				infoDoc = { ...infoDoc, hasThumbnail: true };
+			}
+		});
+		const unsubscribeFailed = events.on('document.thumbnail.failed', ({ documentId }) => {
+			thumbnailStates = { ...thumbnailStates, [documentId]: 'failed' };
+		});
+
+		return () => {
+			unsubscribeGenerated();
+			unsubscribeFailed();
+		};
 	});
+
+	function clearThumbnailState(documentId: string) {
+		const nextStates = { ...thumbnailStates };
+		delete nextStates[documentId];
+		thumbnailStates = nextStates;
+	}
+
+	function markThumbnailReady<T extends Document>(documents: T[], documentId: string): T[] {
+		return documents.map((document) =>
+			document.id === documentId ? { ...document, hasThumbnail: true } : document
+		);
+	}
 
 	async function runSearch(query: string) {
 		activeSearch = query;
@@ -101,14 +132,14 @@
 		if (files?.length) uploadFiles(files);
 	}
 
-	async function loadDocuments() {
-		loading = true;
+	async function loadDocuments(showSkeleton = true) {
+		if (showSkeleton) loading = true;
 		try {
 			docs = await api.getDocuments();
 		} catch (error) {
 			console.error('Fehler beim Laden:', error);
 		} finally {
-			loading = false;
+			if (showSkeleton) loading = false;
 		}
 	}
 
@@ -206,12 +237,13 @@
 					{ msg: `"${file.name}" existiert bereits.`, type: 'info' }
 				];
 			} else {
+				thumbnailStates = { ...thumbnailStates, [result.id]: 'pending' };
 				uploadResults = [
 					...uploadResults,
 					{ msg: `"${file.name}" erfolgreich hochgeladen!`, type: 'success' }
 				];
 			}
-			loadDocuments();
+			void loadDocuments(false);
 		} catch (error) {
 			const msg =
 				error instanceof ApiError
@@ -302,6 +334,7 @@
 			{mimeLabel}
 			{formatSize}
 			thumbnailUrl={(id) => api.thumbnailUrl(id)}
+			thumbnailStatus={(id) => thumbnailStates[id] ?? null}
 			onOpenArchive={openArchive}
 			onOpenContextMenu={openContextMenu}
 			onDownloadArchive={downloadArchive}
@@ -317,6 +350,7 @@
 			{formatSize}
 			{truncateFilename}
 			thumbnailUrl={(id) => api.thumbnailUrl(id)}
+			thumbnailStatus={(id) => thumbnailStates[id] ?? null}
 			onOpenArchive={openArchive}
 			onOpenContextMenu={openContextMenu}
 			onDownloadArchive={downloadArchive}

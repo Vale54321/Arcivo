@@ -11,6 +11,7 @@ import { StorageModule } from './storage/storage.module';
 import { JobModule } from './jobs/job.module';
 import { join } from 'path';
 import { ServeStaticModule } from '@nestjs/serve-static';
+import { EventModule } from './events/event.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
     }),
     DatabaseModule,
     StorageModule,
+    EventModule,
     JobModule,
   ],
   controllers: [DocumentController],

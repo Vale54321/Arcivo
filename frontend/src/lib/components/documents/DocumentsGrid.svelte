@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Archive, Download, Trash2, File as FileIcon } from '@lucide/svelte';
 	import type { Document } from '$lib/api';
+	import Spinner from '$lib/components/ui/Spinner.svelte';
 
 	let {
 		docs,
@@ -10,6 +11,7 @@
 		formatSize,
 		truncateFilename,
 		thumbnailUrl,
+		thumbnailStatus,
 		onOpenArchive,
 		onOpenContextMenu,
 		onDownloadArchive,
@@ -23,6 +25,7 @@
 		formatSize: (bytes: number) => string;
 		truncateFilename: (name: string, maxLength?: number) => string;
 		thumbnailUrl: (id: string) => string;
+		thumbnailStatus: (id: string) => 'pending' | 'failed' | null;
 		onOpenArchive: (doc: Document) => void;
 		onOpenContextMenu: (e: MouseEvent, doc: Document) => void;
 		onDownloadArchive: (doc: Document) => void;
@@ -57,6 +60,7 @@
 	{:else}
 		<div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
 			{#each docs as doc (doc.id)}
+				{@const status = thumbnailStatus(doc.id)}
 				<div
 					role="listitem"
 					class="group relative rounded-xl border border-neutral-200 bg-white p-3 transition-colors hover:border-neutral-300 hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700 dark:hover:bg-neutral-800/60"
@@ -74,6 +78,23 @@
 								class="aspect-square w-full object-cover"
 								loading="lazy"
 							/>
+						{:else if status === 'pending'}
+							<div
+								class="flex aspect-square w-full items-center justify-center text-neutral-400 dark:text-neutral-500"
+								title="Vorschau wird erstellt"
+							>
+								<Spinner size={24} />
+							</div>
+						{:else if status === 'failed'}
+							<div
+								class="flex aspect-square w-full items-center justify-center"
+								title="Vorschau konnte nicht erstellt werden"
+							>
+								<span
+									class="flex h-7 w-7 items-center justify-center rounded-full bg-red-100 text-base font-bold text-red-600 dark:bg-red-950 dark:text-red-400"
+									aria-label="Vorschau konnte nicht erstellt werden">!</span
+								>
+							</div>
 						{:else}
 							{@const Icon = mimeIcon(doc.mimeType)}
 							<div

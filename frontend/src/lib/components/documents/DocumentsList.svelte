@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Archive, Download, Trash2, File as FileIcon } from '@lucide/svelte';
 	import type { Document } from '$lib/api';
+	import Spinner from '$lib/components/ui/Spinner.svelte';
 
 	let {
 		docs,
@@ -10,6 +11,7 @@
 		mimeLabel,
 		formatSize,
 		thumbnailUrl,
+		thumbnailStatus,
 		onOpenArchive,
 		onOpenContextMenu,
 		onDownloadArchive,
@@ -23,6 +25,7 @@
 		mimeLabel: (mimeType: string) => string;
 		formatSize: (bytes: number) => string;
 		thumbnailUrl: (id: string) => string;
+		thumbnailStatus: (id: string) => 'pending' | 'failed' | null;
 		onOpenArchive: (doc: Document) => void;
 		onOpenContextMenu: (e: MouseEvent, doc: Document) => void;
 		onDownloadArchive: (doc: Document) => void;
@@ -103,6 +106,7 @@
 				</tr>
 			{:else}
 				{#each docs as doc (doc.id)}
+					{@const status = thumbnailStatus(doc.id)}
 					<tr
 						class="group flex cursor-pointer items-center border-b border-neutral-100 transition-colors hover:bg-neutral-50 dark:border-neutral-800/60 dark:hover:bg-neutral-800/40"
 						onclick={() => onOpenArchive(doc)}
@@ -118,6 +122,19 @@
 									class="h-9 w-9 shrink-0 rounded-md border border-neutral-200 object-cover dark:border-neutral-700"
 									loading="lazy"
 								/>
+							{:else if status === 'pending'}
+								<span
+									class="flex h-9 w-9 items-center justify-center rounded-md bg-neutral-100 text-neutral-400 dark:bg-neutral-800 dark:text-neutral-500"
+									title="Vorschau wird erstellt"
+								>
+									<Spinner size={16} />
+								</span>
+							{:else if status === 'failed'}
+								<span
+									class="flex h-9 w-9 items-center justify-center rounded-md bg-red-50 text-sm font-bold text-red-600 dark:bg-red-950 dark:text-red-400"
+									title="Vorschau konnte nicht erstellt werden"
+									aria-label="Vorschau konnte nicht erstellt werden">!</span
+								>
 							{:else}
 								{@const Icon = mimeIcon(doc.mimeType)}
 								<span

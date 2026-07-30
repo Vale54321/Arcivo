@@ -8,6 +8,8 @@ import { StorageBucket } from 'src/storage/storage.interface';
 import { Poppler } from 'node-poppler';
 import sharp from 'sharp';
 import { QUEUES } from '../job.constants';
+import { EventService } from 'src/events/event.service';
+import { APP_EVENTS } from 'src/events/event.types';
 
 @Processor(QUEUES.THUMBNAIL_PROCESSING)
 export class ThumbnailProcessor extends WorkerHost {
@@ -16,6 +18,7 @@ export class ThumbnailProcessor extends WorkerHost {
   constructor(
     private readonly documentRepository: DocumentRepository,
     private readonly storageService: StorageService,
+    private readonly eventService: EventService,
   ) {
     super();
   }
@@ -61,6 +64,9 @@ export class ThumbnailProcessor extends WorkerHost {
         .toFile(webpThumbnail);
 
       await this.documentRepository.update(documentId, { hasThumbnail: true });
+      this.eventService.publish(APP_EVENTS.DOCUMENT_THUMBNAIL_GENERATED, {
+        documentId,
+      });
       this.logger.log(`Thumbnail generated: ${webpThumbnail}`);
     } catch (error: unknown) {
       const thumbnailError =
@@ -69,6 +75,12 @@ export class ThumbnailProcessor extends WorkerHost {
         `Failed to generate thumbnail for document ${documentId}: ${thumbnailError.message}`,
         thumbnailError.stack,
       );
+      const isFinalAttempt = job.attemptsMade + 1 >= (job.opts.attempts ?? 1);
+      if (isFinalAttempt) {
+        this.eventService.publish(APP_EVENTS.DOCUMENT_THUMBNAIL_FAILED, {
+          documentId,
+        });
+      }
       throw thumbnailError;
     } finally {
       await this.storageService.deleteFromBucket(

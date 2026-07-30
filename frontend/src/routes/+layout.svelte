@@ -5,6 +5,7 @@
 	import SideNav from '$lib/components/SideNav.svelte';
 	import { setSidebarContext } from '$lib/state/sidebar.svelte';
 	import { setThemeContext } from '$lib/state/theme.svelte';
+	import { events } from '$lib/events';
 
 	let { children } = $props();
 
@@ -12,13 +13,16 @@
 	setThemeContext();
 
 	onMount(() => {
+		events.connect();
 		const splash = document.getElementById('arcivo-splash');
-		if (!splash) return;
+		if (splash) {
+			requestAnimationFrame(() => {
+				splash.classList.add('opacity-0', 'pointer-events-none');
+				window.setTimeout(() => splash.remove(), 250);
+			});
+		}
 
-		requestAnimationFrame(() => {
-			splash.classList.add('opacity-0', 'pointer-events-none');
-			window.setTimeout(() => splash.remove(), 250);
-		});
+		return () => events.disconnect();
 	});
 </script>
 

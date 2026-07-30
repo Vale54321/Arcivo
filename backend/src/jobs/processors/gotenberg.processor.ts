@@ -8,6 +8,8 @@ import { StorageBucket } from 'src/storage/storage.interface';
 import { StorageService } from 'src/storage/storage.service';
 import { JobService } from '../job.service';
 import { QUEUES } from '../job.constants';
+import { EventService } from 'src/events/event.service';
+import { APP_EVENTS } from 'src/events/event.types';
 
 @Processor(QUEUES.GOTENBERG_CONVERSION)
 export class GotenbergProcessor extends WorkerHost {
@@ -17,6 +19,7 @@ export class GotenbergProcessor extends WorkerHost {
     private readonly documentRepository: DocumentRepository,
     private readonly storageService: StorageService,
     private readonly jobService: JobService,
+    private readonly eventService: EventService,
   ) {
     super();
   }
@@ -59,6 +62,12 @@ export class GotenbergProcessor extends WorkerHost {
         `Job ${job.id} failed: ${jobError.message}`,
         jobError.stack,
       );
+      const isFinalAttempt = job.attemptsMade + 1 >= (job.opts.attempts ?? 1);
+      if (isFinalAttempt) {
+        this.eventService.publish(APP_EVENTS.DOCUMENT_THUMBNAIL_FAILED, {
+          documentId,
+        });
+      }
       throw jobError;
     }
   }

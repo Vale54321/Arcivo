@@ -10,6 +10,7 @@ import { StorageModule } from 'src/storage/storage.module';
 import { DocumentRepository } from 'src/repositories/document.repository';
 import { LoggingRepository } from 'src/repositories/logging.repository';
 import { TextExtractionProcessor } from './processors/text-extraction.processor';
+import { EventModule } from 'src/events/event.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { TextExtractionProcessor } from './processors/text-extraction.processor'
       { name: QUEUES.TEXT_EXTRACTION },
     ),
     StorageModule,
+    EventModule,
   ],
   controllers: [],
   providers: [
