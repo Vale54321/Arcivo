@@ -2,6 +2,7 @@
 	import { Archive, Download, Trash2, File as FileIcon } from '@lucide/svelte';
 	import type { Document } from '$lib/api';
 	import Spinner from '$lib/components/ui/Spinner.svelte';
+	import DocumentThumbnail from './DocumentThumbnail.svelte';
 
 	let {
 		docs,
@@ -72,11 +73,9 @@
 						title="Archivversion öffnen"
 					>
 						{#if doc.hasThumbnail}
-							<img
+							<DocumentThumbnail
 								src={thumbnailUrl(doc.id)}
-								alt="Vorschau"
 								class="aspect-square w-full object-cover"
-								loading="lazy"
 							/>
 						{:else if status === 'pending'}
 							<div

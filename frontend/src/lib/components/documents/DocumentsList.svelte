@@ -2,6 +2,7 @@
 	import { Archive, Download, Trash2, File as FileIcon } from '@lucide/svelte';
 	import type { Document } from '$lib/api';
 	import Spinner from '$lib/components/ui/Spinner.svelte';
+	import DocumentThumbnail from './DocumentThumbnail.svelte';
 
 	let {
 		docs,
@@ -114,14 +115,15 @@
 					>
 						<td class="w-14 shrink-0 px-4 py-3">
 							{#if doc.hasThumbnail}
-								<img
-									src={thumbnailUrl(doc.id)}
-									alt="Vorschau"
-									width="36"
-									height="36"
-									class="h-9 w-9 shrink-0 rounded-md border border-neutral-200 object-cover dark:border-neutral-700"
-									loading="lazy"
-								/>
+								<span
+									class="flex h-9 w-9 shrink-0 overflow-hidden rounded-md border border-neutral-200 dark:border-neutral-700"
+								>
+									<DocumentThumbnail
+										src={thumbnailUrl(doc.id)}
+										alt="Vorschau"
+										class="h-full w-full object-cover"
+									/>
+								</span>
 							{:else if status === 'pending'}
 								<span
 									class="flex h-9 w-9 items-center justify-center rounded-md bg-neutral-100 text-neutral-400 dark:bg-neutral-800 dark:text-neutral-500"
