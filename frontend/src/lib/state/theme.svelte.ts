@@ -47,12 +47,10 @@ class ThemeState {
 
 	private syncDocumentTheme(value: Theme) {
 		if (typeof document !== 'undefined') {
-			let dark = false;
-			if (value === 'system') {
-				dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-			} else {
-				dark = value === 'dark';
-			}
+			const dark =
+				value === 'system'
+					? window.matchMedia('(prefers-color-scheme: dark)').matches
+					: value === 'dark';
 			document.documentElement.classList.toggle('dark', dark);
 		}
 	}
