@@ -1,5 +1,6 @@
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
-import { FileMigrationProvider, Kysely, Migrator } from 'kysely';
+import { Kysely } from 'kysely';
+import { FileMigrationProvider, Migrator } from 'kysely/migration';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { LoggingService } from 'logging/logging.service';

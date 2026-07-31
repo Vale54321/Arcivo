@@ -4,6 +4,10 @@
   "description": "",
   "author": "",
   "private": true,
+  "type": "commonjs",
+  "engines": {
+    "node": ">=24 <25"
+  },
   "license": "UNLICENSED",
   "scripts": {
     "build": "nest build",
@@ -26,15 +30,15 @@
     "@nestjs/core": "^11.1.28",
     "@nestjs/platform-express": "^11.1.28",
     "@nestjs/serve-static": "^5.0.5",
-    "@nestjs/swagger": "^11.4.5",
+    "@nestjs/swagger": "^11.4.6",
     "bullmq": "^5.81.3",
-    "chromiumly": "^4.5.0",
+    "chromiumly": "^5.2.1",
     "class-validator": "^0.15.1",
     "joi": "^18.2.3",
-    "kysely": "^0.28.17",
+    "kysely": "^0.29.4",
     "mime": "^4.1.0",
     "multer": "^2.2.0",
-    "node-poppler": "^9.1.2",
+    "node-poppler": "^10.0.1",
     "pg": "^8.22.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
@@ -42,7 +46,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.6",
-    "@eslint/js": "^9.39.5",
+    "@eslint/js": "^10.0.1",
     "@nestjs/cli": "^11.0.24",
     "@nestjs/schematics": "^11.1.0",
     "@nestjs/testing": "^11.1.28",
@@ -50,13 +54,13 @@
     "@types/jest": "^30.0.0",
     "@types/mime": "^3.0.4",
     "@types/multer": "^2.2.0",
-    "@types/node": "^22.20.1",
+    "@types/node": "^26.1.2",
     "@types/pg": "^8.20.0",
-    "@types/supertest": "^6.0.2",
-    "eslint": "^9.39.5",
+    "@types/supertest": "^7.2.1",
+    "eslint": "^10.8.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.5.6",
-    "globals": "^16.0.0",
+    "globals": "^17.8.0",
     "jest": "^30.4.2",
     "nodemon": "^3.1.14",
     "prettier": "^3.9.6",
@@ -68,6 +72,11 @@
     "tsconfig-paths": "^4.2.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.65.0"
+  },
+  "overrides": {
+    "@nestjs/swagger": {
+      "js-yaml": "5.2.2"
+    }
   },
   "jest": {
     "moduleFileExtensions": [
