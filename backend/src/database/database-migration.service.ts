@@ -2,14 +2,14 @@ import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { FileMigrationProvider, Kysely, Migrator } from 'kysely';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { LoggingRepository } from 'src/repositories/logging.repository';
+import { LoggingService } from 'src/logging/logging.service';
 import { Database } from './database.types';
 
 @Injectable()
 export class DatabaseMigrationService implements OnModuleInit {
   constructor(
     @Inject(Kysely) private readonly db: Kysely<Database>,
-    private readonly logger: LoggingRepository,
+    private readonly logger: LoggingService,
   ) {
     this.logger.setContext(DatabaseMigrationService.name);
   }

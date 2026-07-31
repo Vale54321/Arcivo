@@ -1,7 +1,7 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
-import { DocumentRepository } from 'src/repositories/document.repository';
+import { DocumentRepository } from 'src/document/document.repository';
 import { PdfConversionJobData } from '../interfaces/job-data.interface';
 import { LibreOffice, PdfFormat } from 'chromiumly';
 import { StorageBucket } from 'src/storage/storage.interface';

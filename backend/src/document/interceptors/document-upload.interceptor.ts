@@ -12,10 +12,10 @@ import { of } from 'rxjs';
 import {
   DocumentStatus,
   type DocumentResponseDto,
-} from 'src/dtos/document.response.dto';
-import { DocumentService } from 'src/services/document.service';
-import { getMimeType, isSupportedMimeType } from 'src/utils/file-type';
-import { decodeUploadFilename } from 'src/utils/filename';
+} from '../dto/document.response.dto';
+import { DocumentService } from '../document.service';
+import { getMimeType, isSupportedMimeType } from '../utils/file-type';
+import { decodeUploadFilename } from '../utils/filename';
 
 export type DocumentUploadRequest = Request & {
   files?: { documentData?: Express.Multer.File[] };

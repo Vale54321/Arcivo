@@ -7,8 +7,8 @@ import {
   TextExtractionJobData,
   ThumbnailJobData,
 } from './interfaces/job-data.interface';
-import { BaseService } from 'src/services/base.service';
-import { LoggingRepository } from 'src/repositories/logging.repository';
+import { BaseService } from 'src/logging/base.service';
+import { LoggingService } from 'src/logging/logging.service';
 
 @Injectable()
 export class JobService extends BaseService {
@@ -19,9 +19,9 @@ export class JobService extends BaseService {
     private readonly thumbnailQueue: Queue,
     @InjectQueue(QUEUES.TEXT_EXTRACTION)
     private readonly textExtractionQueue: Queue,
-    loggingRepository: LoggingRepository,
+    loggingService: LoggingService,
   ) {
-    super(loggingRepository);
+    super(loggingService);
   }
 
   async addPdfConversionJob(documentId: string): Promise<void> {

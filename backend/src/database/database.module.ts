@@ -2,14 +2,14 @@ import { Global, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Kysely, ParseJSONResultsPlugin, PostgresDialect } from 'kysely';
 import { Pool } from 'pg';
-import { LoggingRepository } from 'src/repositories/logging.repository';
+import { LoggingModule } from 'src/logging/logging.module';
 import { DatabaseMigrationService } from './database-migration.service';
 import { Database } from './database.types';
 
 @Global()
 @Module({
+  imports: [LoggingModule],
   providers: [
-    LoggingRepository,
     {
       provide: Kysely,
       inject: [ConfigService],

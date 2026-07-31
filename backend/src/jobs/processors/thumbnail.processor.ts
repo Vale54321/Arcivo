@@ -2,7 +2,7 @@ import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
 import { StorageService } from 'src/storage/storage.service';
-import { DocumentRepository } from 'src/repositories/document.repository';
+import { DocumentRepository } from 'src/document/document.repository';
 import { ThumbnailJobData } from '../interfaces/job-data.interface';
 import { StorageBucket } from 'src/storage/storage.interface';
 import { Poppler } from 'node-poppler';

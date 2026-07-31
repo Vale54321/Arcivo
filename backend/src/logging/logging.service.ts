@@ -1,7 +1,7 @@
 import { Injectable, Logger, Scope } from '@nestjs/common';
 
 @Injectable({ scope: Scope.TRANSIENT })
-export class LoggingRepository {
+export class LoggingService {
   private readonly logger = new Logger();
   private context = 'App';
 

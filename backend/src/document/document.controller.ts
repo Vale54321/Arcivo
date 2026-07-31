@@ -26,18 +26,18 @@ import {
 } from '@nestjs/swagger';
 import { createReadStream } from 'node:fs';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
-import { DocumentUploadDto } from 'src/dtos/document.dto';
+import { DocumentUploadDto } from './dto/document.dto';
 import {
   DocumentDto,
   DocumentResponseDto,
   DocumentSearchResultDto,
-} from 'src/dtos/document.response.dto';
+} from './dto/document.response.dto';
 import {
   DocumentUploadInterceptor,
   type DocumentUploadRequest,
-} from 'src/middleware/document-upload.interceptor';
-import { DocumentService } from 'src/services/document.service';
-import { contentDisposition } from 'src/utils/filename';
+} from './interceptors/document-upload.interceptor';
+import { DocumentService } from './document.service';
+import { contentDisposition } from './utils/filename';
 
 @Controller('document')
 @ApiTags('documents')

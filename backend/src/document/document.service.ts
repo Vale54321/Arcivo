@@ -2,19 +2,19 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { unlink } from 'node:fs/promises';
 import { access } from 'node:fs/promises';
 import { constants } from 'node:fs';
-import { BaseService } from './base.service';
-import { LoggingRepository } from 'src/repositories/logging.repository';
-import { DocumentUploadDto } from 'src/dtos/document.dto';
-import { FileHashService } from 'src/services/hash.service';
-import { getMimeType } from 'src/utils/file-type';
-import { DocumentRepository } from 'src/repositories/document.repository';
+import { BaseService } from 'src/logging/base.service';
+import { LoggingService } from 'src/logging/logging.service';
+import { DocumentUploadDto } from './dto/document.dto';
+import { FileHashService } from './services/file-hash.service';
+import { getMimeType } from './utils/file-type';
+import { DocumentRepository } from './document.repository';
 import { StorageService } from 'src/storage/storage.service';
 import { StorageBucket } from 'src/storage/storage.interface';
 import { basename, extname } from 'node:path';
 import {
   DocumentResponseDto,
   DocumentStatus,
-} from 'src/dtos/document.response.dto';
+} from './dto/document.response.dto';
 import { JobService } from 'src/jobs/job.service';
 
 @Injectable()
@@ -23,10 +23,10 @@ export class DocumentService extends BaseService {
     private documentRepository: DocumentRepository,
     private jobService: JobService,
     private storageService: StorageService,
-    loggingRepository: LoggingRepository,
+    loggingService: LoggingService,
     private readonly fileHashService: FileHashService,
   ) {
-    super(loggingRepository);
+    super(loggingService);
   }
   private readonly dummyOwnerId = '00000000-0000-0000-0000-000000000000';
 
