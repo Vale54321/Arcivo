@@ -3,6 +3,9 @@
 	import './layout.css';
 	import AppHeader from '$lib/components/AppHeader.svelte';
 	import SideNav from '$lib/components/SideNav.svelte';
+	import DocumentViewer from '$lib/components/documents/DocumentViewer.svelte';
+	import { api } from '$lib/api';
+	import { documentViewer } from '$lib/stores';
 	import { setSidebarContext } from '$lib/state/sidebar.svelte';
 	import { setThemeContext } from '$lib/state/theme.svelte';
 	import { events } from '$lib/events';
@@ -45,3 +48,14 @@
 		</main>
 	</div>
 </div>
+
+{#if $documentViewer}
+	{#key $documentViewer.doc.id}
+		<DocumentViewer
+			doc={$documentViewer.doc}
+			src={api.archiveUrl($documentViewer.doc.id)}
+			searchQuery={$documentViewer.searchQuery}
+			onClose={() => documentViewer.set(null)}
+		/>
+	{/key}
+{/if}
