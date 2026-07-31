@@ -3,14 +3,13 @@
 	import { resolve } from '$app/paths';
 	import { onMount } from 'svelte';
 	import { api, ApiError, type Document, type SearchResult } from '$lib/api';
-	import { uploadOpen, searchQuery } from '$lib/stores';
+	import { documentViewer, uploadOpen, searchQuery } from '$lib/stores';
 	import { events } from '$lib/events';
 	import { getAccessToken } from '$lib/auth';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import ActiveSearchBanner from '$lib/components/documents/ActiveSearchBanner.svelte';
 	import DocumentContextMenu from '$lib/components/documents/DocumentContextMenu.svelte';
 	import DocumentInfoModal from '$lib/components/documents/DocumentInfoModal.svelte';
-	import DocumentViewer from '$lib/components/documents/DocumentViewer.svelte';
 	import DocumentsGrid from '$lib/components/documents/DocumentsGrid.svelte';
 	import DocumentsList from '$lib/components/documents/DocumentsList.svelte';
 	import DocumentsPageHeader from '$lib/components/documents/DocumentsPageHeader.svelte';
@@ -45,8 +44,6 @@
 	let ctxMenu = $state<{ x: number; y: number; doc: Document } | null>(null);
 	let infoDoc = $state<Document | null>(null);
 	let thumbnailStates = $state<Record<string, 'pending' | 'failed'>>({});
-	let viewerDoc = $state<Document | null>(null);
-	let viewerSrc = $state<string | null>(null);
 
 	let displayDocs = $derived(activeSearch ? searchResults : docs);
 
@@ -161,15 +158,8 @@
 		URL.revokeObjectURL(anchor.href);
 	}
 
-	async function openArchive(doc: Document) {
-		try {
-			const blob = await api.downloadArchive(doc.id);
-			if (viewerSrc) URL.revokeObjectURL(viewerSrc);
-			viewerSrc = URL.createObjectURL(blob);
-			viewerDoc = doc;
-		} catch (error) {
-			console.error('Archiv konnte nicht geöffnet werden:', error);
-		}
+	function openArchive(doc: Document) {
+		documentViewer.set({ doc });
 	}
 
 	async function downloadArchive(doc: Document) {
@@ -308,11 +298,6 @@
 		uploadResults = uploadResults.filter((_, currentIndex) => currentIndex !== index);
 	}
 
-	function closeViewer() {
-		if (viewerSrc) URL.revokeObjectURL(viewerSrc);
-		viewerSrc = null;
-		viewerDoc = null;
-	}
 </script>
 
 <ConfirmDialog
@@ -405,11 +390,3 @@
 />
 
 <DocumentInfoModal {infoDoc} {mimeIcon} {mimeLabel} {formatSize} onClose={() => (infoDoc = null)} />
-
-{#if viewerDoc && viewerSrc}
-	<DocumentViewer
-		doc={viewerDoc}
-		src={viewerSrc}
-		onClose={closeViewer}
-	/>
-{/if}

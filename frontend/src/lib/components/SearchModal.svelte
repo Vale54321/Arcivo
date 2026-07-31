@@ -2,7 +2,7 @@
 	import { tick } from 'svelte';
 	import { Search } from '@lucide/svelte';
 	import { api, ApiError, type Document, type SearchResult } from '$lib/api';
-	import { searchQuery } from '$lib/stores';
+	import { documentViewer, searchQuery } from '$lib/stores';
 	import SearchResultItem from '$lib/components/search/SearchResultItem.svelte';
 
 	const RECENT_KEY = 'arcivo:recent';
@@ -19,7 +19,7 @@
 	let highlighted = $state(0);
 	let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
-	let visibleDocs = $derived<Document[]>(query.trim() ? results : recentDocs);
+	let visibleDocs = $derived<(Document | SearchResult)[]>(query.trim() ? results : recentDocs);
 
 	function loadRecent(): Document[] {
 		try {
@@ -70,16 +70,12 @@
 		}
 	}
 
-	async function select(doc: Document) {
+	function select(doc: Document | SearchResult) {
 		saveRecent(doc);
-		try {
-			const blob = await api.downloadArchive(doc.id);
-			const url = URL.createObjectURL(blob);
-			window.open(url, '_blank', 'noopener');
-			window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
-		} catch {
-			error = 'Das Archiv konnte nicht geöffnet werden.';
-		}
+		const term = query.trim();
+		const contentMatch =
+			'matchType' in doc && (doc.matchType === 'content' || doc.matchType === 'both');
+		documentViewer.set({ doc, searchQuery: contentMatch && term ? term : undefined });
 		close();
 	}
 
