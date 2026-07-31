@@ -4,14 +4,22 @@
 	import type { Document } from '$lib/api';
 	import Spinner from '$lib/components/ui/Spinner.svelte';
 	import { getThemeContext } from '$lib/state/theme.svelte';
+	import type {
+		DocumentManagerPlugin,
+		PluginRegistry,
+		SearchPlugin,
+		UIPlugin
+	} from '@embedpdf/snippet';
 
 	let {
 		doc,
 		src,
+		searchQuery,
 		onClose
 	}: {
 		doc: Document;
 		src: string;
+		searchQuery?: string;
 		onClose: () => void;
 	} = $props();
 
@@ -21,7 +29,9 @@
 	let loadFailed = $state(false);
 
 	let config = $derived({
-		src,
+		documentManager: {
+			initialDocuments: [{ url: src, documentId: doc.id, name: doc.name }]
+		},
 		tabBar: 'never' as const,
 		theme: { preference: theme.current },
 		disabledCategories: [
@@ -57,6 +67,39 @@
 
 	function openInNewTab() {
 		window.open(src, '_blank', 'noopener,noreferrer');
+	}
+
+	function onViewerReady(registry: PluginRegistry) {
+		viewerReady = true;
+		const term = searchQuery?.trim();
+		if (!term) return;
+
+		const documentManager = registry
+			.getPlugin<DocumentManagerPlugin>('document-manager')
+			?.provides();
+
+		const openSearch = (documentId: string) => {
+			registry
+				.getPlugin<UIPlugin>('ui')
+				?.provides()
+				.forDocument(documentId)
+				.setActiveSidebar('right', 'main', 'search-panel');
+
+			const search = registry.getPlugin<SearchPlugin>('search')?.provides().forDocument(documentId);
+			search?.startSearch();
+			search?.searchAllPages(term);
+		};
+
+		const activeDocumentId = documentManager?.getActiveDocumentId();
+		if (activeDocumentId) {
+			openSearch(activeDocumentId);
+			return;
+		}
+
+		const unsubscribe = documentManager?.onDocumentOpened((openedDocument) => {
+			unsubscribe?.();
+			openSearch(openedDocument.id);
+		});
 	}
 </script>
 
@@ -136,11 +179,7 @@
 
 				{#if PDFViewer}
 					{#key theme.current}
-						<PDFViewer
-							{config}
-							onready={() => (viewerReady = true)}
-							style="width: 100%; height: 100%;"
-						/>
+						<PDFViewer {config} onready={onViewerReady} style="width: 100%; height: 100%;" />
 					{/key}
 				{/if}
 			{/if}

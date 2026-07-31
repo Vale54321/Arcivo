@@ -1,13 +1,12 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { api, ApiError, type Document, type SearchResult } from '$lib/api';
-	import { uploadOpen, searchQuery } from '$lib/stores';
+	import { documentViewer, uploadOpen, searchQuery } from '$lib/stores';
 	import { events } from '$lib/events';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import ActiveSearchBanner from '$lib/components/documents/ActiveSearchBanner.svelte';
 	import DocumentContextMenu from '$lib/components/documents/DocumentContextMenu.svelte';
 	import DocumentInfoModal from '$lib/components/documents/DocumentInfoModal.svelte';
-	import DocumentViewer from '$lib/components/documents/DocumentViewer.svelte';
 	import DocumentsGrid from '$lib/components/documents/DocumentsGrid.svelte';
 	import DocumentsList from '$lib/components/documents/DocumentsList.svelte';
 	import DocumentsPageHeader from '$lib/components/documents/DocumentsPageHeader.svelte';
@@ -42,7 +41,6 @@
 	let ctxMenu = $state<{ x: number; y: number; doc: Document } | null>(null);
 	let infoDoc = $state<Document | null>(null);
 	let thumbnailStates = $state<Record<string, 'pending' | 'failed'>>({});
-	let viewerDoc = $state<Document | null>(null);
 
 	let displayDocs = $derived(activeSearch ? searchResults : docs);
 
@@ -156,7 +154,7 @@
 	}
 
 	function openArchive(doc: Document) {
-		viewerDoc = doc;
+		documentViewer.set({ doc });
 	}
 
 	function downloadArchive(doc: Document) {
@@ -380,11 +378,3 @@
 />
 
 <DocumentInfoModal {infoDoc} {mimeIcon} {mimeLabel} {formatSize} onClose={() => (infoDoc = null)} />
-
-{#if viewerDoc}
-	<DocumentViewer
-		doc={viewerDoc}
-		src={api.archiveUrl(viewerDoc.id)}
-		onClose={() => (viewerDoc = null)}
-	/>
-{/if}
