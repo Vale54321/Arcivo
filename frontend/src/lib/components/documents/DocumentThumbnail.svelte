@@ -12,10 +12,9 @@
 	let { src, alt = 'Vorschau', class: className = '', width, height }: Props = $props();
 	let luminance = $state<'unknown' | 'light' | 'dark'>('unknown');
 
-	const sampleSize = 32;
-	const lightPixelThreshold = 0.82;
-	const requiredLightPixelRatio = 0.66;
-	const requiredAverageLuminance = 0.72;
+	const sampleSize = 48;
+	const requiredAverageLuminance = 0.68;
+	const requiredMedianLuminance = 0.72;
 
 	function cacheKey() {
 		return `arcivo:thumbnail-luminance:v1:${src}`;
@@ -57,24 +56,24 @@
 		try {
 			context.drawImage(image, 0, 0, canvas.width, canvas.height);
 			const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
-			let visiblePixels = 0;
-			let lightPixels = 0;
+			const luminances: number[] = [];
 			let luminanceTotal = 0;
 
 			for (let index = 0; index < pixels.length; index += 4) {
 				if (pixels[index + 3] < 32) continue;
 
-				const luminance =
+				const pixelLuminance =
 					(0.2126 * pixels[index] + 0.7152 * pixels[index + 1] + 0.0722 * pixels[index + 2]) / 255;
-				visiblePixels += 1;
-				luminanceTotal += luminance;
-				if (luminance >= lightPixelThreshold) lightPixels += 1;
+				luminances.push(pixelLuminance);
+				luminanceTotal += pixelLuminance;
 			}
 
+			luminances.sort((left, right) => left - right);
+			const medianIndex = Math.floor(luminances.length / 2);
+			const medianLuminance = luminances[medianIndex] ?? 0;
+			const averageLuminance = luminances.length ? luminanceTotal / luminances.length : 0;
 			const isMostlyLight =
-				visiblePixels > 0 &&
-				lightPixels / visiblePixels >= requiredLightPixelRatio &&
-				luminanceTotal / visiblePixels >= requiredAverageLuminance;
+				averageLuminance >= requiredAverageLuminance && medianLuminance >= requiredMedianLuminance;
 			setLuminance(isMostlyLight ? 'light' : 'dark');
 		} catch {
 			setLuminance('dark', false);
