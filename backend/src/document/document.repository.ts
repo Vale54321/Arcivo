@@ -5,7 +5,7 @@ import {
   DocumentEntity,
   NewDocument,
   DocumentUpdate,
-} from 'src/database/database.types';
+} from 'database/database.types';
 
 export type CreateDocumentDto = Omit<NewDocument, 'checksum'> & {
   checksum: string;

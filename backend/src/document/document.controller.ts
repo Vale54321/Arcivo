@@ -26,6 +26,7 @@ import {
 } from '@nestjs/swagger';
 import { createReadStream } from 'node:fs';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import 'multer';
 import { DocumentUploadDto } from './dto/document.dto';
 import {
   DocumentDto,

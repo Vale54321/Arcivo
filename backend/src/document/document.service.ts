@@ -2,20 +2,21 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { unlink } from 'node:fs/promises';
 import { access } from 'node:fs/promises';
 import { constants } from 'node:fs';
-import { BaseService } from 'src/logging/base.service';
-import { LoggingService } from 'src/logging/logging.service';
+import 'multer';
+import { BaseService } from 'logging/base.service';
+import { LoggingService } from 'logging/logging.service';
 import { DocumentUploadDto } from './dto/document.dto';
 import { FileHashService } from './services/file-hash.service';
 import { getMimeType } from './utils/file-type';
 import { DocumentRepository } from './document.repository';
-import { StorageService } from 'src/storage/storage.service';
-import { StorageBucket } from 'src/storage/storage.interface';
+import { StorageService } from 'storage/storage.service';
+import { StorageBucket } from 'storage/storage.interface';
 import { basename, extname } from 'node:path';
 import {
   DocumentResponseDto,
   DocumentStatus,
 } from './dto/document.response.dto';
-import { JobService } from 'src/jobs/job.service';
+import { JobService } from 'jobs/job.service';
 
 @Injectable()
 export class DocumentService extends BaseService {

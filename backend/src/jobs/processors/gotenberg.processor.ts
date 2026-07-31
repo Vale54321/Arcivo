@@ -1,15 +1,15 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
-import { DocumentRepository } from 'src/document/document.repository';
+import { DocumentRepository } from 'document/document.repository';
 import { PdfConversionJobData } from '../interfaces/job-data.interface';
 import { LibreOffice, PdfFormat } from 'chromiumly';
-import { StorageBucket } from 'src/storage/storage.interface';
-import { StorageService } from 'src/storage/storage.service';
+import { StorageBucket } from 'storage/storage.interface';
+import { StorageService } from 'storage/storage.service';
 import { JobService } from '../job.service';
 import { QUEUES } from '../job.constants';
-import { EventService } from 'src/events/event.service';
-import { APP_EVENTS } from 'src/events/event.types';
+import { EventService } from 'events/event.service';
+import { APP_EVENTS } from 'events/event.types';
 
 @Processor(QUEUES.GOTENBERG_CONVERSION)
 export class GotenbergProcessor extends WorkerHost {

@@ -9,6 +9,7 @@ import {
 import type { Request, Response } from 'express';
 import { unlink } from 'node:fs/promises';
 import { of } from 'rxjs';
+import 'multer';
 import {
   DocumentStatus,
   type DocumentResponseDto,

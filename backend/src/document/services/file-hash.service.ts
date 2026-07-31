@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { createReadStream } from 'node:fs';
 import { pipeline } from 'node:stream/promises';
-import { BaseService } from 'src/logging/base.service';
+import { BaseService } from 'logging/base.service';
 
 @Injectable()
 export class FileHashService extends BaseService {

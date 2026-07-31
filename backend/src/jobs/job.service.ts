@@ -7,8 +7,8 @@ import {
   TextExtractionJobData,
   ThumbnailJobData,
 } from './interfaces/job-data.interface';
-import { BaseService } from 'src/logging/base.service';
-import { LoggingService } from 'src/logging/logging.service';
+import { BaseService } from 'logging/base.service';
+import { LoggingService } from 'logging/logging.service';
 
 @Injectable()
 export class JobService extends BaseService {

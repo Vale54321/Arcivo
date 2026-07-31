@@ -2,7 +2,7 @@ import { Global, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Kysely, ParseJSONResultsPlugin, PostgresDialect } from 'kysely';
 import { Pool } from 'pg';
-import { LoggingModule } from 'src/logging/logging.module';
+import { LoggingModule } from 'logging/logging.module';
 import { DatabaseMigrationService } from './database-migration.service';
 import { Database } from './database.types';
 

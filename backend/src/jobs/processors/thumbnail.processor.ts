@@ -1,15 +1,15 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
-import { StorageService } from 'src/storage/storage.service';
-import { DocumentRepository } from 'src/document/document.repository';
+import { StorageService } from 'storage/storage.service';
+import { DocumentRepository } from 'document/document.repository';
 import { ThumbnailJobData } from '../interfaces/job-data.interface';
-import { StorageBucket } from 'src/storage/storage.interface';
+import { StorageBucket } from 'storage/storage.interface';
 import { Poppler } from 'node-poppler';
 import sharp from 'sharp';
 import { QUEUES } from '../job.constants';
-import { EventService } from 'src/events/event.service';
-import { APP_EVENTS } from 'src/events/event.types';
+import { EventService } from 'events/event.service';
+import { APP_EVENTS } from 'events/event.types';
 
 @Processor(QUEUES.THUMBNAIL_PROCESSING)
 export class ThumbnailProcessor extends WorkerHost {

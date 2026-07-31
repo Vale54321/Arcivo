@@ -2,7 +2,7 @@ import { Module, OnModuleInit } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { ConfigService } from '@nestjs/config';
 import { Chromiumly } from 'chromiumly';
-import { LoggingModule } from 'src/logging/logging.module';
+import { LoggingModule } from 'logging/logging.module';
 import { QUEUES } from './job.constants';
 import { JobService } from './job.service';
 

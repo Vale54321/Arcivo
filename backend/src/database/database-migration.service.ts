@@ -2,7 +2,7 @@ import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { FileMigrationProvider, Kysely, Migrator } from 'kysely';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { LoggingService } from 'src/logging/logging.service';
+import { LoggingService } from 'logging/logging.service';
 import { Database } from './database.types';
 
 @Injectable()
