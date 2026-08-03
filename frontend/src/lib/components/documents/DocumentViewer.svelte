@@ -1,15 +1,17 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { ExternalLink, FileText, X } from '@lucide/svelte';
+	import type { PDFDocumentLoadingTask, PDFDocumentProxy } from 'pdfjs-dist';
+	import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 	import type { Document } from '$lib/api';
 	import Spinner from '$lib/components/ui/Spinner.svelte';
-	import { getThemeContext } from '$lib/state/theme.svelte';
-	import type {
-		DocumentManagerPlugin,
-		PluginRegistry,
-		SearchPlugin,
-		UIPlugin
-	} from '@embedpdf/snippet';
+	import PdfPage from './pdf-viewer/PdfPage.svelte';
+	import PdfSearchPanel from './pdf-viewer/PdfSearchPanel.svelte';
+	import PdfViewerError from './pdf-viewer/PdfViewerError.svelte';
+	import PdfViewerHeader from './pdf-viewer/PdfViewerHeader.svelte';
+	import PdfViewerToolbar from './pdf-viewer/PdfViewerToolbar.svelte';
+	import { PdfSearchController } from './pdf-viewer/pdf-search.svelte';
+	import type { PdfJs } from './pdf-viewer/pdf-viewer-types';
+	import './pdf-viewer/pdf-viewer.css';
 
 	let {
 		doc,
@@ -23,83 +25,132 @@
 		onClose: () => void;
 	} = $props();
 
-	const theme = getThemeContext();
-	let PDFViewer = $state<typeof import('@embedpdf/svelte-pdf-viewer').PDFViewer>();
-	let viewerReady = $state(false);
-	let loadFailed = $state(false);
+	let pdfjs = $state<PdfJs>();
+	let pdfDocument = $state<PDFDocumentProxy>();
+	let loadingTask: PDFDocumentLoadingTask | undefined;
 
-	let config = $derived({
-		documentManager: {
-			initialDocuments: [{ url: src, documentId: doc.id, name: doc.name }]
-		},
-		tabBar: 'never' as const,
-		theme: { preference: theme.current },
-		disabledCategories: [
-			'document-open',
-			'document-close',
-			'annotation',
-			'redaction',
-			'signature',
-			'stamp'
-		]
+	let pageNumber = $state(1);
+	let pageCount = $state(0);
+	let zoom = $state(100);
+	let rotation = $state(0);
+	let fitMode = $state<'height' | 'width' | 'custom'>('height');
+	let searchOpen = $state(false);
+	let loadFailed = $state(false);
+	let errorMessage = $state('');
+
+	const search = new PdfSearchController((page) => {
+		pageNumber = page;
 	});
 
 	onMount(() => {
 		const previousOverflow = document.body.style.overflow;
 		document.body.style.overflow = 'hidden';
-
-		import('@embedpdf/svelte-pdf-viewer')
-			.then((module) => {
-				PDFViewer = module.PDFViewer;
-			})
-			.catch(() => {
-				loadFailed = true;
-			});
+		window.addEventListener('wheel', onWheel, { passive: false });
+		void loadDocument();
 
 		return () => {
+			search.destroy();
+			void loadingTask?.destroy();
+			window.removeEventListener('wheel', onWheel);
 			document.body.style.overflow = previousOverflow;
 		};
 	});
 
-	function onKeydown(event: KeyboardEvent) {
-		if (event.key === 'Escape') onClose();
+	async function loadDocument(): Promise<void> {
+		try {
+			const loadedPdfjs = await import('pdfjs-dist');
+			loadedPdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+			loadingTask = loadedPdfjs.getDocument({ url: src });
+			const loadedDocument = await loadingTask.promise;
+
+			pdfjs = loadedPdfjs;
+			pdfDocument = loadedDocument;
+			pageCount = loadedDocument.numPages;
+
+			const initialSearch = searchQuery?.trim() ?? '';
+			if (initialSearch) {
+				searchOpen = true;
+				search.input = initialSearch;
+				await search.run(loadedDocument, initialSearch);
+			}
+		} catch (error) {
+			showError(error instanceof Error ? error.message : 'Unbekannter Fehler');
+		}
 	}
 
-	function openInNewTab() {
-		window.open(src, '_blank', 'noopener,noreferrer');
+	function setPage(value: number): void {
+		pageNumber = Math.min(pageCount, Math.max(1, Math.round(value) || 1));
 	}
 
-	function onViewerReady(registry: PluginRegistry) {
-		viewerReady = true;
-		const term = searchQuery?.trim();
-		if (!term) return;
+	function changeZoom(delta: number): void {
+		fitMode = 'custom';
+		zoom = Math.min(300, Math.max(25, zoom + delta));
+	}
 
-		const documentManager = registry
-			.getPlugin<DocumentManagerPlugin>('document-manager')
-			?.provides();
+	function resetZoom(): void {
+		fitMode = 'custom';
+		zoom = 100;
+	}
 
-		const openSearch = (documentId: string) => {
-			registry
-				.getPlugin<UIPlugin>('ui')
-				?.provides()
-				.forDocument(documentId)
-				.setActiveSidebar('right', 'main', 'search-panel');
+	function toggleSearch(): void {
+		searchOpen = !searchOpen;
+		if (!searchOpen) search.clear();
+	}
 
-			const search = registry.getPlugin<SearchPlugin>('search')?.provides().forDocument(documentId);
-			search?.startSearch();
-			search?.searchAllPages(term);
-		};
-
-		const activeDocumentId = documentManager?.getActiveDocumentId();
-		if (activeDocumentId) {
-			openSearch(activeDocumentId);
+	function onKeydown(event: KeyboardEvent): void {
+		const hasZoomModifier = event.ctrlKey || event.metaKey;
+		if (hasZoomModifier && event.key.toLocaleLowerCase() === 'f') {
+			event.preventDefault();
+			searchOpen = true;
+			requestAnimationFrame(() => document.getElementById('arcivo-pdf-search')?.focus());
 			return;
 		}
 
-		const unsubscribe = documentManager?.onDocumentOpened((openedDocument) => {
-			unsubscribe?.();
-			openSearch(openedDocument.id);
-		});
+		if (hasZoomModifier && (event.key === '+' || event.key === '=')) {
+			event.preventDefault();
+			changeZoom(25);
+			return;
+		}
+
+		if (hasZoomModifier && (event.key === '-' || event.key === '_')) {
+			event.preventDefault();
+			changeZoom(-25);
+			return;
+		}
+
+		if (hasZoomModifier && event.key === '0') {
+			event.preventDefault();
+			resetZoom();
+			return;
+		}
+
+		if (event.key === 'Escape') {
+			if (searchOpen) toggleSearch();
+			else onClose();
+		}
+	}
+
+	function onWheel(event: WheelEvent): void {
+		if (!(event.ctrlKey || event.metaKey) || event.deltaY === 0) return;
+		event.preventDefault();
+		changeZoom(event.deltaY < 0 ? 10 : -10);
+	}
+
+	function openInNewTab(): void {
+		window.open(src, '_blank', 'noopener,noreferrer');
+	}
+
+	function download(): void {
+		const anchor = document.createElement('a');
+		anchor.href = src;
+		anchor.download = doc.name;
+		anchor.rel = 'noopener';
+		anchor.click();
+	}
+
+	function showError(message: string): void {
+		loadFailed = true;
+		errorMessage = message;
 	}
 </script>
 
@@ -112,76 +163,65 @@
 		aria-label={`Dokument ${doc.name}`}
 		class="flex h-full min-h-0 w-full flex-col overflow-hidden rounded-xl border border-neutral-300 bg-white shadow-2xl dark:border-neutral-700 dark:bg-neutral-900"
 	>
-		<header
-			class="flex h-14 shrink-0 items-center gap-3 border-b border-neutral-200 px-3 sm:px-4 dark:border-neutral-800"
-		>
-			<span
-				class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-red-50 text-red-600 dark:bg-red-950/50 dark:text-red-400"
-			>
-				<FileText size={17} />
-			</span>
-
-			<div class="min-w-0 flex-1">
-				<h2 class="truncate text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-					{doc.name}
-				</h2>
-				<p class="text-xs text-neutral-500 dark:text-neutral-400">PDF-Archivversion</p>
-			</div>
-
-			<button
-				type="button"
-				onclick={openInNewTab}
-				title="In neuem Tab öffnen"
-				aria-label="In neuem Tab öffnen"
-				class="flex h-9 w-9 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
-			>
-				<ExternalLink size={17} />
-			</button>
-			<button
-				type="button"
-				onclick={onClose}
-				title="Viewer schließen"
-				aria-label="Viewer schließen"
-				class="flex h-9 w-9 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
-			>
-				<X size={19} />
-			</button>
+		<header class="shrink-0 border-b border-neutral-200 dark:border-neutral-800">
+			<PdfViewerHeader
+				documentName={doc.name}
+				onOpenInNewTab={openInNewTab}
+				onDownload={download}
+				{onClose}
+			/>
+			<PdfViewerToolbar
+				{pageNumber}
+				{pageCount}
+				{zoom}
+				fitToWidth={fitMode === 'width'}
+				fitToHeight={fitMode === 'height'}
+				{searchOpen}
+				onSetPage={setPage}
+				onChangeZoom={changeZoom}
+				onResetZoom={resetZoom}
+				onFitToWidth={() => (fitMode = 'width')}
+				onRotate={() => (rotation = (rotation + 90) % 360)}
+				onToggleSearch={toggleSearch}
+			/>
 		</header>
 
-		<div class="relative min-h-0 flex-1 bg-neutral-100 dark:bg-neutral-950">
+		<div class="relative flex min-h-0 flex-1 overflow-hidden">
 			{#if loadFailed}
-				<div class="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
-					<FileText size={32} class="text-neutral-400" />
-					<div>
-						<p class="font-medium text-neutral-800 dark:text-neutral-200">
-							Der PDF-Viewer konnte nicht geladen werden.
-						</p>
-						<button
-							type="button"
-							onclick={openInNewTab}
-							class="mt-1 inline-block text-sm text-blue-600 hover:underline dark:text-blue-400"
-						>
-							Archivversion im Browser öffnen
-						</button>
+				<PdfViewerError message={errorMessage} onOpenInNewTab={openInNewTab} />
+			{:else if pdfjs && pdfDocument}
+				<PdfPage
+					{pdfjs}
+					document={pdfDocument}
+					{pageNumber}
+					{zoom}
+					{rotation}
+					{fitMode}
+					query={search.query}
+					pageTextCache={search.pageTextCache}
+					onError={showError}
+				/>
+			{:else}
+				<div
+					class="flex min-w-0 flex-1 items-center justify-center bg-neutral-100 dark:bg-neutral-950"
+				>
+					<div class="flex items-center gap-3 text-sm text-neutral-500 dark:text-neutral-400">
+						<Spinner size={18} /><span>PDF wird geladen …</span>
 					</div>
 				</div>
-			{:else}
-				{#if !viewerReady}
-					<div
-						class="absolute inset-0 z-10 flex items-center justify-center bg-neutral-100 dark:bg-neutral-950"
-					>
-						<div class="flex items-center gap-3 text-sm text-neutral-500 dark:text-neutral-400">
-							<Spinner size={18} />
-							<span>PDF-Viewer wird geladen …</span>
-						</div>
-					</div>
-				{/if}
+			{/if}
 
-				{#if PDFViewer}
-					{#key theme.current}
-						<PDFViewer {config} onready={onViewerReady} style="width: 100%; height: 100%;" />
-					{/key}
-				{/if}
+			{#if searchOpen}
+				<PdfSearchPanel
+					bind:input={search.input}
+					status={search.status}
+					results={search.results}
+					currentIndex={search.currentIndex}
+					onSearch={() => search.schedule(pdfDocument)}
+					onClose={toggleSearch}
+					onMove={(direction) => search.move(direction)}
+					onSelect={(index) => search.select(index)}
+				/>
 			{/if}
 		</div>
 	</div>
