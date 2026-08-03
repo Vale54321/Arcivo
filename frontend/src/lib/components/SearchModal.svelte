@@ -19,7 +19,18 @@
 	let highlighted = $state(0);
 	let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
-	let visibleDocs = $derived<(Document | SearchResult)[]>(query.trim() ? results : recentDocs);
+	let orderedResults = $derived(prioritizeNameMatches(results));
+	let visibleDocs = $derived<(Document | SearchResult)[]>(
+		query.trim() ? orderedResults : recentDocs
+	);
+
+	function prioritizeNameMatches(searchResults: SearchResult[]): SearchResult[] {
+		return [...searchResults].sort((left, right) => matchPriority(left) - matchPriority(right));
+	}
+
+	function matchPriority(result: SearchResult): number {
+		return result.matchType === 'content' ? 1 : 0;
+	}
 
 	function loadRecent(): Document[] {
 		try {
@@ -199,9 +210,10 @@
 			</p>
 		{:else}
 			<ul class="max-h-72 overflow-y-auto py-2">
-				{#each results as doc, index (doc.id)}
+				{#each orderedResults as doc, index (doc.id)}
 					<SearchResultItem
 						{doc}
+						searchTerm={query}
 						matchType={doc.matchType}
 						highlighted={index === highlighted}
 						onSelect={select}
