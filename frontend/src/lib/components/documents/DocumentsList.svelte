@@ -11,7 +11,6 @@
 		mimeIcon,
 		mimeLabel,
 		formatSize,
-		thumbnailUrl,
 		thumbnailStatus,
 		onOpenArchive,
 		onOpenContextMenu,
@@ -25,7 +24,6 @@
 		mimeIcon: (mimeType: string) => typeof FileIcon;
 		mimeLabel: (mimeType: string) => string;
 		formatSize: (bytes: number) => string;
-		thumbnailUrl: (id: string) => string;
 		thumbnailStatus: (id: string) => 'pending' | 'failed' | null;
 		onOpenArchive: (doc: Document) => void;
 		onOpenContextMenu: (e: MouseEvent, doc: Document) => void;
@@ -119,7 +117,7 @@
 									class="flex h-9 w-9 shrink-0 overflow-hidden rounded-md border border-neutral-200 dark:border-neutral-700"
 								>
 									<DocumentThumbnail
-										src={thumbnailUrl(doc.id)}
+										documentId={doc.id}
 										alt="Vorschau"
 										class="h-full w-full object-cover"
 									/>

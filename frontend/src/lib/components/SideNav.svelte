@@ -3,6 +3,8 @@
 	import { getSidebarContext } from '$lib/state/sidebar.svelte';
 	import { Files, FolderOpen, Settings, Tag, Trash2, X, type LucideIcon } from '@lucide/svelte';
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
+	import { currentUser } from '$lib/state/current-user';
 	import NavButton from './NavButton.svelte';
 
 	const sidebar = getSidebarContext();
@@ -30,6 +32,18 @@
 			sidebar.close();
 		}
 	}
+
+	function initials(name: string): string {
+		const words = name.trim().split(/\s+/).filter(Boolean);
+		if (words.length > 1) {
+			return `${words[0][0]}${words[1][0]}`.toUpperCase();
+		}
+		return name.trim().slice(0, 2).toUpperCase();
+	}
+
+	const accountName = $derived($currentUser?.displayName || 'Konto');
+	const accountInitials = $derived(initials(accountName));
+	const accountIsActive = $derived(page.url.pathname.startsWith('/account'));
 </script>
 
 <svelte:window onkeydown={handleWindowKeydown} />
@@ -68,14 +82,21 @@
 
 	<ul class="flex flex-col gap-0.5 border-t border-neutral-200 px-2 pt-4 dark:border-neutral-800">
 		<NavButton name="Einstellungen" icon={Settings} soon />
-		<li class="mt-2 flex items-center gap-3 rounded-lg px-3 py-2">
-			<span
-				class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-neutral-200 text-xs font-semibold text-neutral-600 dark:bg-neutral-700 dark:text-neutral-200"
-				aria-hidden="true"
+		<li class="mt-2 min-w-0">
+			<a
+				href={resolve('/account')}
+				class="flex min-w-0 items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors {accountIsActive
+					? 'bg-neutral-200 font-medium text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100'
+					: 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-800/60 dark:hover:text-neutral-200'}"
 			>
-				AD
-			</span>
-			<span class="text-sm text-neutral-500 dark:text-neutral-400">Admin</span>
+				<span
+					class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-100 text-xs font-semibold text-red-700 dark:bg-red-950/60 dark:text-red-300"
+					aria-hidden="true"
+				>
+					{accountInitials}
+				</span>
+				<span class="min-w-0 flex-1 truncate" title={accountName}>{accountName}</span>
+			</a>
 		</li>
 	</ul>
 </nav>

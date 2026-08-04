@@ -41,6 +41,7 @@ services:
     environment:
       - NODE_ENV=development
       - DB_PASSWORD=${DB_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
     volumes:
       - ./backend/src:/app/src
       - ./data/library:/app/library

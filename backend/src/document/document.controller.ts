@@ -7,15 +7,19 @@ import {
   HttpCode,
   Header,
   Param,
+  ParseUUIDPipe,
+  Patch,
   Post,
   Req,
   StreamableFile,
   UploadedFiles,
+  UseGuards,
   UseInterceptors,
   Query,
 } from '@nestjs/common';
 import {
   ApiBody,
+  ApiBearerAuth,
   ApiConsumes,
   ApiHeader,
   ApiOperation,
@@ -24,10 +28,13 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { CurrentUser } from 'auth/decorators/current-user.decorator';
+import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
+import type { AuthenticatedUser } from 'auth/interfaces/authenticated-user.interface';
 import { createReadStream } from 'node:fs';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import 'multer';
-import { DocumentUploadDto } from './dto/document.dto';
+import { DocumentUploadDto, UpdateDocumentDto } from './dto/document.dto';
 import {
   DocumentDto,
   DocumentResponseDto,
@@ -42,6 +49,8 @@ import { contentDisposition } from './utils/filename';
 
 @Controller('document')
 @ApiTags('documents')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 export class DocumentController {
   constructor(private service: DocumentService) {}
 
@@ -83,6 +92,7 @@ export class DocumentController {
     }),
   )
   async uploadDocument(
+    @CurrentUser() user: AuthenticatedUser,
     @UploadedFiles() files: { documentData?: Express.Multer.File[] },
     @Body() dto: DocumentUploadDto,
     @Req() req: DocumentUploadRequest,
@@ -94,14 +104,14 @@ export class DocumentController {
       throw new BadRequestException('Missing x-arcivo-filename header');
     }
 
-    return this.service.uploadDocument(dto, file, req.arcivoFilename);
+    return this.service.uploadDocument(user.id, dto, file, req.arcivoFilename);
   }
 
   @Get()
   @ApiOperation({ summary: 'List all documents' })
   @ApiResponse({ status: 200, type: [DocumentDto] })
-  async getAll() {
-    return await this.service.getAllDocuments();
+  async getAll(@CurrentUser() user: AuthenticatedUser) {
+    return await this.service.getAllDocuments(user.id);
   }
 
   @Get('search')
@@ -112,10 +122,10 @@ export class DocumentController {
     description: 'Filename or text search query',
   })
   @ApiResponse({ status: 200, type: [DocumentSearchResultDto] })
-  async search(@Query('q') q: string) {
+  async search(@CurrentUser() user: AuthenticatedUser, @Query('q') q: string) {
     if (!q?.trim())
       throw new BadRequestException('Query parameter "q" is required');
-    return await this.service.searchDocuments(q.trim());
+    return await this.service.searchDocuments(user.id, q.trim());
   }
 
   @Get(':id')
@@ -123,15 +133,21 @@ export class DocumentController {
   @ApiParam({ name: 'id', description: 'Document UUID' })
   @ApiResponse({ status: 200, type: DocumentDto })
   @ApiResponse({ status: 404, description: 'Document not found' })
-  async getById(@Param('id') id: string) {
-    return await this.service.getDocumentById(id);
+  async getById(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ) {
+    return await this.service.getDocumentById(user.id, id);
   }
 
   @Get(':id/file')
   @ApiOperation({ summary: 'Download the original document' })
   @ApiParam({ name: 'id', description: 'Document UUID' })
-  async getFile(@Param('id') id: string): Promise<StreamableFile> {
-    const documentFile = await this.service.getDocumentFile(id);
+  async getFile(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ): Promise<StreamableFile> {
+    const documentFile = await this.service.getDocumentFile(user.id, id);
     const stream = createReadStream(documentFile.path);
 
     return new StreamableFile(stream, {
@@ -143,8 +159,11 @@ export class DocumentController {
   @Get(':id/archive')
   @ApiOperation({ summary: 'Download the PDF archive' })
   @ApiParam({ name: 'id', description: 'Document UUID' })
-  async getArchive(@Param('id') id: string): Promise<StreamableFile> {
-    const archiveFile = await this.service.getDocumentArchive(id);
+  async getArchive(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ): Promise<StreamableFile> {
+    const archiveFile = await this.service.getDocumentArchive(user.id, id);
     const stream = createReadStream(archiveFile.path);
 
     return new StreamableFile(stream, {
@@ -157,8 +176,14 @@ export class DocumentController {
   @ApiOperation({ summary: 'Get a document thumbnail' })
   @ApiParam({ name: 'id', description: 'Document UUID' })
   @Header('Content-Type', 'image/webp')
-  async getThumbnail(@Param('id') id: string): Promise<StreamableFile> {
-    const thumbnailPath = await this.service.getDocumentThumbnailPath(id);
+  async getThumbnail(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ): Promise<StreamableFile> {
+    const thumbnailPath = await this.service.getDocumentThumbnailPath(
+      user.id,
+      id,
+    );
     const stream = createReadStream(thumbnailPath);
     return new StreamableFile(stream);
   }
@@ -168,7 +193,22 @@ export class DocumentController {
   @ApiParam({ name: 'id', description: 'Document UUID' })
   @ApiResponse({ status: 204, description: 'Document deleted' })
   @HttpCode(204)
-  async deleteDocument(@Param('id') id: string) {
-    return await this.service.deleteDocument(id);
+  async deleteDocument(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ) {
+    return await this.service.deleteDocument(user.id, id);
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Update document metadata' })
+  @ApiParam({ name: 'id', description: 'Document UUID' })
+  @ApiResponse({ status: 200, type: DocumentDto })
+  async updateDocument(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() dto: UpdateDocumentDto,
+  ) {
+    return await this.service.updateDocument(user.id, id, dto);
   }
 }

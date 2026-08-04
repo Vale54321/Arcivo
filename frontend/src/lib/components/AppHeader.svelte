@@ -1,4 +1,7 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
 	import { getSidebarContext } from '$lib/state/sidebar.svelte';
 	import { getThemeContext } from '$lib/state/theme.svelte';
 	import { uploadOpen } from '$lib/stores';
@@ -14,6 +17,13 @@
 		dark: 'Use system theme'
 	};
 	const themeMessage = NEXT_THEME_MESSAGE[theme.current];
+
+	async function openUpload() {
+		uploadOpen.set(true);
+		if (page.url.pathname !== '/') {
+			await goto(resolve('/'));
+		}
+	}
 </script>
 
 <header
@@ -63,7 +73,7 @@
 
 	<button
 		type="button"
-		onclick={() => uploadOpen.set(true)}
+		onclick={() => void openUpload()}
 		class="ml-2 flex shrink-0 items-center gap-2 rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-red-500 dark:bg-red-700 dark:hover:bg-red-600"
 	>
 		<Upload size={15} />

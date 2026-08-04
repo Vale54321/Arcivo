@@ -1,8 +1,11 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { onMount } from 'svelte';
 	import { api, ApiError, type Document, type SearchResult } from '$lib/api';
 	import { uploadOpen, searchQuery } from '$lib/stores';
 	import { events } from '$lib/events';
+	import { getAccessToken } from '$lib/auth';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import ActiveSearchBanner from '$lib/components/documents/ActiveSearchBanner.svelte';
 	import DocumentContextMenu from '$lib/components/documents/DocumentContextMenu.svelte';
@@ -56,6 +59,10 @@
 	});
 
 	onMount(() => {
+		if (!getAccessToken()) {
+			void goto(resolve('/login'), { replaceState: true });
+			return;
+		}
 		void loadDocuments();
 
 		const unsubscribeGenerated = events.on('document.thumbnail.generated', ({ documentId }) => {
@@ -143,9 +150,7 @@
 		}
 	}
 
-	async function triggerDownload(url: string, filename: string) {
-		const response = await fetch(url);
-		const blob = await response.blob();
+	function saveBlob(blob: Blob, filename: string) {
 		const anchor = document.createElement('a');
 		anchor.href = URL.createObjectURL(blob);
 		anchor.download = filename;
@@ -153,16 +158,31 @@
 		URL.revokeObjectURL(anchor.href);
 	}
 
-	function openArchive(doc: Document) {
-		window.open(api.archiveUrl(doc.id), '_blank');
+	async function openArchive(doc: Document) {
+		try {
+			const blob = await api.downloadArchive(doc.id);
+			const url = URL.createObjectURL(blob);
+			window.open(url, '_blank', 'noopener');
+			window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+		} catch (error) {
+			console.error('Archiv konnte nicht geöffnet werden:', error);
+		}
 	}
 
-	function downloadArchive(doc: Document) {
-		triggerDownload(api.archiveUrl(doc.id), doc.name + '.pdf');
+	async function downloadArchive(doc: Document) {
+		try {
+			saveBlob(await api.downloadArchive(doc.id), doc.name + '.pdf');
+		} catch (error) {
+			console.error('Archiv konnte nicht heruntergeladen werden:', error);
+		}
 	}
 
-	function downloadOriginal(doc: Document) {
-		triggerDownload(api.downloadUrl(doc.id), doc.name);
+	async function downloadOriginal(doc: Document) {
+		try {
+			saveBlob(await api.downloadOriginal(doc.id), doc.name);
+		} catch (error) {
+			console.error('Original konnte nicht heruntergeladen werden:', error);
+		}
 	}
 
 	function promptDelete(doc: Document, e: MouseEvent) {
@@ -333,7 +353,6 @@
 			{mimeIcon}
 			{mimeLabel}
 			{formatSize}
-			thumbnailUrl={(id) => api.thumbnailUrl(id)}
 			thumbnailStatus={(id) => thumbnailStates[id] ?? null}
 			onOpenArchive={openArchive}
 			onOpenContextMenu={openContextMenu}
@@ -349,7 +368,6 @@
 			{mimeIcon}
 			{formatSize}
 			{truncateFilename}
-			thumbnailUrl={(id) => api.thumbnailUrl(id)}
 			thumbnailStatus={(id) => thumbnailStates[id] ?? null}
 			onOpenArchive={openArchive}
 			onOpenContextMenu={openContextMenu}

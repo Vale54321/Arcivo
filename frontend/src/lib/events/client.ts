@@ -9,7 +9,9 @@ export type EventHandler<TName extends AppEventName> = (
 export type AnyEventHandler = (event: AppEvent) => void;
 
 export class EventStreamClient {
-	private source: EventSource | null = null;
+	private controller: AbortController | null = null;
+	private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+	private reconnectAttempts = 0;
 	private readonly handlers = new Map<AppEventName, Set<EventHandler<AppEventName>>>();
 	private readonly anyHandlers = new Set<AnyEventHandler>();
 	private readonly statusStore = writable<EventConnectionStatus>('idle');
@@ -18,27 +20,22 @@ export class EventStreamClient {
 		subscribe: this.statusStore.subscribe
 	};
 
-	constructor(private readonly url: string) {}
+	constructor(
+		private readonly url: string,
+		private readonly accessToken: () => string | null
+	) {}
 
 	connect(): void {
-		if (this.source || typeof EventSource === 'undefined') return;
-
-		this.statusStore.set('connecting');
-		const source = new EventSource(this.url);
-		this.source = source;
-
-		source.onopen = () => this.statusStore.set('open');
-		source.onerror = () => {
-			this.statusStore.set(
-				source.readyState === EventSource.CONNECTING ? 'reconnecting' : 'closed'
-			);
-		};
-		source.onmessage = (message) => this.dispatch(message);
+		if (this.controller || this.reconnectTimer) return;
+		void this.open(false);
 	}
 
 	disconnect(): void {
-		this.source?.close();
-		this.source = null;
+		if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+		this.reconnectTimer = null;
+		this.controller?.abort();
+		this.controller = null;
+		this.reconnectAttempts = 0;
 		this.statusStore.set('closed');
 	}
 
@@ -58,13 +55,105 @@ export class EventStreamClient {
 		return () => this.anyHandlers.delete(handler);
 	}
 
-	private dispatch(message: MessageEvent<string>): void {
+	private async open(reconnecting: boolean): Promise<void> {
+		const token = this.accessToken();
+		if (!token) {
+			this.statusStore.set('closed');
+			return;
+		}
+
+		this.statusStore.set(reconnecting ? 'reconnecting' : 'connecting');
+		const controller = new AbortController();
+		this.controller = controller;
+		let shouldReconnect = true;
+
+		try {
+			const response = await fetch(this.url, {
+				headers: {
+					Accept: 'text/event-stream',
+					Authorization: `Bearer ${token}`
+				},
+				signal: controller.signal
+			});
+			if (response.status === 401 || response.status === 403) {
+				shouldReconnect = false;
+				this.statusStore.set('closed');
+			}
+			if (!response.ok || !response.body) {
+				throw new Error(`SSE connection failed with status ${response.status}`);
+			}
+
+			this.reconnectAttempts = 0;
+			this.statusStore.set('open');
+			await this.read(response.body, controller.signal);
+		} catch (error) {
+			if (!controller.signal.aborted) {
+				console.warn('SSE connection failed', error);
+			}
+		} finally {
+			if (this.controller === controller) {
+				this.controller = null;
+				if (!controller.signal.aborted && shouldReconnect) this.scheduleReconnect();
+			}
+		}
+	}
+
+	private async read(stream: ReadableStream<Uint8Array>, signal: AbortSignal): Promise<void> {
+		const reader = stream.getReader();
+		const decoder = new TextDecoder();
+		let buffer = '';
+
+		try {
+			while (!signal.aborted) {
+				const { done, value } = await reader.read();
+				if (done) return;
+				buffer += decoder.decode(value, { stream: true }).replace(/\r\n/g, '\n');
+
+				let boundary = buffer.indexOf('\n\n');
+				while (boundary !== -1) {
+					this.dispatchFrame(buffer.slice(0, boundary));
+					buffer = buffer.slice(boundary + 2);
+					boundary = buffer.indexOf('\n\n');
+				}
+			}
+		} finally {
+			reader.releaseLock();
+		}
+	}
+
+	private scheduleReconnect(): void {
+		this.reconnectAttempts += 1;
+		const delay = Math.min(1_000 * 2 ** (this.reconnectAttempts - 1), 10_000);
+		this.statusStore.set('reconnecting');
+		this.reconnectTimer = setTimeout(() => {
+			this.reconnectTimer = null;
+			void this.open(true);
+		}, delay);
+	}
+
+	private dispatchFrame(frame: string): void {
+		const eventType = frame
+			.split('\n')
+			.find((line) => line.startsWith('event:'))
+			?.slice('event:'.length)
+			.trim();
+		if (eventType === 'heartbeat') return;
+
+		const data = frame
+			.split('\n')
+			.filter((line) => line.startsWith('data:'))
+			.map((line) => line.slice('data:'.length).trimStart())
+			.join('\n');
+		if (data) this.dispatch(data);
+	}
+
+	private dispatch(data: string): void {
 		let event: AppEvent;
 
 		try {
-			event = JSON.parse(message.data) as AppEvent;
+			event = JSON.parse(data) as AppEvent;
 		} catch {
-			console.warn('Ignoring malformed SSE event', message.data);
+			console.warn('Ignoring malformed SSE event', data);
 			return;
 		}
 

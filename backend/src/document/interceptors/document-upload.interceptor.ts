@@ -15,12 +15,14 @@ import {
   type DocumentResponseDto,
 } from '../dto/document.response.dto';
 import { DocumentService } from '../document.service';
+import type { AuthenticatedUser } from 'auth/interfaces/authenticated-user.interface';
 import { getMimeType, isSupportedMimeType } from '../utils/file-type';
 import { decodeUploadFilename } from '../utils/filename';
 
 export type DocumentUploadRequest = Request & {
   files?: { documentData?: Express.Multer.File[] };
   arcivoFilename?: string;
+  user: AuthenticatedUser;
 };
 
 @Injectable()
@@ -54,7 +56,10 @@ export class DocumentUploadInterceptor implements NestInterceptor {
     }
 
     if (checksum) {
-      const duplicate = await this.service.getDocumentByChecksum(checksum);
+      const duplicate = await this.service.getDocumentByChecksum(
+        req.user.id,
+        checksum,
+      );
       if (duplicate) {
         const tempPath = req.files?.documentData?.[0]?.path || undefined;
         if (tempPath) await this.deleteTempFile(tempPath);

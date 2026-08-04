@@ -1,32 +1,86 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { api } from '$lib/api';
 
 	interface Props {
-		src: string;
+		documentId: string;
 		alt?: string;
 		class?: string;
 		width?: number;
 		height?: number;
 	}
 
-	let { src, alt = 'Vorschau', class: className = '', width, height }: Props = $props();
+	let { documentId, alt = 'Vorschau', class: className = '', width, height }: Props = $props();
 	let luminance = $state<'unknown' | 'light' | 'dark'>('unknown');
+	let src = $state<string | null>(null);
+	let imageElement = $state<HTMLImageElement>();
+	let shouldLoad = $state(false);
 
 	const sampleSize = 48;
 	const requiredAverageLuminance = 0.68;
 	const requiredMedianLuminance = 0.72;
 
 	function cacheKey() {
-		return `arcivo:thumbnail-luminance:v1:${src}`;
+		return `arcivo:thumbnail-luminance:v1:${documentId}`;
 	}
 
-	onMount(() => {
+	function restoreLuminance() {
 		try {
 			const cached = localStorage.getItem(cacheKey());
 			if (cached === 'light' || cached === 'dark') luminance = cached;
 		} catch {
 			// Storage can be unavailable in privacy modes; analysis still works.
 		}
+	}
+
+	$effect(() => {
+		if (!imageElement || shouldLoad) return;
+		if (typeof IntersectionObserver === 'undefined') {
+			shouldLoad = true;
+			return;
+		}
+
+		const observer = new IntersectionObserver(
+			(entries) => {
+				if (!entries.some((entry) => entry.isIntersecting)) return;
+				shouldLoad = true;
+				observer.disconnect();
+			},
+			{ rootMargin: '300px 0px' }
+		);
+		observer.observe(imageElement);
+
+		return () => observer.disconnect();
+	});
+
+	$effect(() => {
+		if (!shouldLoad) return;
+
+		let disposed = false;
+		let objectUrl: string | null = null;
+		const controller = new AbortController();
+		src = null;
+		luminance = 'unknown';
+
+		void api
+			.getThumbnail(documentId, controller.signal)
+			.then((blob) => {
+				objectUrl = URL.createObjectURL(blob);
+				if (disposed) {
+					URL.revokeObjectURL(objectUrl);
+					return;
+				}
+				src = objectUrl;
+				restoreLuminance();
+			})
+			.catch(() => {
+				if (!disposed) setLuminance('dark', false);
+			});
+
+		return () => {
+			disposed = true;
+			controller.abort();
+			if (objectUrl) URL.revokeObjectURL(objectUrl);
+		};
 	});
 
 	function setLuminance(value: 'light' | 'dark', cache = true) {
@@ -82,11 +136,11 @@
 </script>
 
 <img
-	{src}
+	bind:this={imageElement}
+	src={src ?? undefined}
 	{alt}
 	{width}
 	{height}
-	crossorigin="anonymous"
 	class="{className} thumbnail-image {luminance === 'light' ? 'mostly-light' : ''} {luminance ===
 	'unknown'
 		? 'awaiting-analysis'

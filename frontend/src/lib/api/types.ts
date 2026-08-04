@@ -43,3 +43,31 @@ export interface UploadDocumentOptions {
 	onProgress?: (percent: number) => void;
 	signal?: AbortSignal;
 }
+
+export interface AccessTokenResponse {
+	accessToken: string;
+}
+
+export interface User {
+	id: string;
+	email: string;
+	displayName: string;
+	isAdmin: boolean;
+	createdAt: string;
+	updatedAt: string;
+}
+
+export interface UpdateUserInput {
+	email?: string;
+	displayName?: string;
+}
+
+export interface CreateUserInput {
+	email: string;
+	displayName: string;
+	password: string;
+}
+
+export interface ResetUserPasswordInput {
+	password: string;
+}

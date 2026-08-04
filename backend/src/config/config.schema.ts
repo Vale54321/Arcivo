@@ -16,4 +16,10 @@ export const configValidationSchema = Joi.object({
   DB_USERNAME: Joi.string().default('arcivo'),
   DB_PASSWORD: Joi.string().required(),
   DB_DATABASE: Joi.string().default('arcivo'),
+
+  // Authentication configuration
+  JWT_SECRET: Joi.string().min(32).required(),
+  JWT_ACCESS_TOKEN_TTL: Joi.string()
+    .pattern(/^\d+[smhd]$/)
+    .default('15m'),
 });

@@ -1,11 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { unlink } from 'node:fs/promises';
 import { access } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import 'multer';
 import { BaseService } from 'logging/base.service';
 import { LoggingService } from 'logging/logging.service';
-import { DocumentUploadDto } from './dto/document.dto';
+import { DocumentUploadDto, UpdateDocumentDto } from './dto/document.dto';
 import { FileHashService } from './services/file-hash.service';
 import { getMimeType } from './utils/file-type';
 import { DocumentRepository } from './document.repository';
@@ -29,9 +33,8 @@ export class DocumentService extends BaseService {
   ) {
     super(loggingService);
   }
-  private readonly dummyOwnerId = '00000000-0000-0000-0000-000000000000';
-
   async uploadDocument(
+    ownerId: string,
     dto: DocumentUploadDto,
     file: Express.Multer.File,
     filename: string,
@@ -55,7 +58,7 @@ export class DocumentService extends BaseService {
     this.logger.debug(`File created at: ${fileDate.toISOString()}`);
 
     const duplicate = await this.documentRepository.findByChecksum(
-      this.dummyOwnerId,
+      ownerId,
       checksum,
     );
     if (duplicate) {
@@ -73,7 +76,7 @@ export class DocumentService extends BaseService {
         extension: extension,
         size: file.size,
         mimeType: mimeType,
-        ownerId: this.dummyOwnerId,
+        ownerId,
         fileCreatedAt: fileDate,
       });
 
@@ -108,22 +111,20 @@ export class DocumentService extends BaseService {
   }
 
   async getDocumentByChecksum(
+    ownerId: string,
     checksum: string,
   ): Promise<{ id: string } | null> {
-    return await this.documentRepository.findByChecksum(
-      this.dummyOwnerId,
-      checksum,
-    );
+    return await this.documentRepository.findByChecksum(ownerId, checksum);
   }
 
-  async getDocumentById(id: string) {
-    const doc = await this.documentRepository.findById(id);
+  async getDocumentById(ownerId: string, id: string) {
+    const doc = await this.documentRepository.findByIdForOwner(id, ownerId);
     if (!doc) throw new NotFoundException(`Document ${id} not found`);
     return doc;
   }
 
-  async getDocumentThumbnailPath(id: string): Promise<string> {
-    const doc = await this.documentRepository.findById(id);
+  async getDocumentThumbnailPath(ownerId: string, id: string): Promise<string> {
+    const doc = await this.documentRepository.findByIdForOwner(id, ownerId);
     if (!doc) throw new NotFoundException(`Document ${id} not found`);
     if (!doc.hasThumbnail) {
       throw new NotFoundException(`Thumbnail for document ${id} not found`);
@@ -144,9 +145,10 @@ export class DocumentService extends BaseService {
   }
 
   async getDocumentFile(
+    ownerId: string,
     id: string,
   ): Promise<{ path: string; mimeType: string; name: string }> {
-    const doc = await this.documentRepository.findById(id);
+    const doc = await this.documentRepository.findByIdForOwner(id, ownerId);
     if (!doc) throw new NotFoundException(`Document ${id} not found`);
 
     const filePath = await this.storageService.resolveFilePath(
@@ -164,9 +166,10 @@ export class DocumentService extends BaseService {
   }
 
   async getDocumentArchive(
+    ownerId: string,
     id: string,
   ): Promise<{ path: string; name: string }> {
-    const doc = await this.documentRepository.findById(id);
+    const doc = await this.documentRepository.findByIdForOwner(id, ownerId);
     if (!doc) throw new NotFoundException(`Document ${id} not found`);
 
     const archivePath = await this.storageService.resolveFilePath(
@@ -185,16 +188,16 @@ export class DocumentService extends BaseService {
     };
   }
 
-  async getAllDocuments() {
+  async getAllDocuments(ownerId: string) {
     this.logger.log('Fetching all documents');
-    return await this.documentRepository.findAll();
+    return await this.documentRepository.findAll(ownerId);
   }
 
-  async deleteDocument(id: string): Promise<void> {
-    const doc = await this.documentRepository.findById(id);
+  async deleteDocument(ownerId: string, id: string): Promise<void> {
+    const doc = await this.documentRepository.findByIdForOwner(id, ownerId);
     if (!doc) throw new NotFoundException('Document not found');
 
-    const deleted = await this.documentRepository.delete(id);
+    const deleted = await this.documentRepository.deleteForOwner(id, ownerId);
     if (!deleted) throw new NotFoundException('Document not found');
 
     await this.storageService.deleteFromBucket(
@@ -216,6 +219,23 @@ export class DocumentService extends BaseService {
     this.logger.log(`Deleted document ${id} and associated files`);
   }
 
+  async updateDocument(ownerId: string, id: string, dto: UpdateDocumentDto) {
+    if (Object.keys(dto).length === 0) {
+      throw new BadRequestException('At least one document field is required');
+    }
+
+    const { fileCreatedAt, ...metadata } = dto;
+    const document = await this.documentRepository.updateForOwner(id, ownerId, {
+      ...metadata,
+      ...(metadata.name && { name: metadata.name.trim() }),
+      ...(fileCreatedAt && { fileCreatedAt: new Date(fileCreatedAt) }),
+    });
+    if (!document) {
+      throw new NotFoundException(`Document ${id} not found`);
+    }
+    return document;
+  }
+
   private async deleteTempFile(filePath: string): Promise<void> {
     try {
       await unlink(filePath);
@@ -227,11 +247,11 @@ export class DocumentService extends BaseService {
     }
   }
 
-  async searchDocuments(query: string) {
+  async searchDocuments(ownerId: string, query: string) {
     const term = query.trim();
     this.logger.log(`Searching documents for: "${query}"`);
 
-    const docs = await this.documentRepository.search(query);
+    const docs = await this.documentRepository.search(ownerId, query);
 
     if (!docs || docs.length === 0) {
       throw new NotFoundException(`No documents found for: "${term}"`);

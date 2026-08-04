@@ -11,7 +11,6 @@
 		mimeIcon,
 		formatSize,
 		truncateFilename,
-		thumbnailUrl,
 		thumbnailStatus,
 		onOpenArchive,
 		onOpenContextMenu,
@@ -25,7 +24,6 @@
 		mimeIcon: (mimeType: string) => typeof FileIcon;
 		formatSize: (bytes: number) => string;
 		truncateFilename: (name: string, maxLength?: number) => string;
-		thumbnailUrl: (id: string) => string;
 		thumbnailStatus: (id: string) => 'pending' | 'failed' | null;
 		onOpenArchive: (doc: Document) => void;
 		onOpenContextMenu: (e: MouseEvent, doc: Document) => void;
@@ -73,10 +71,7 @@
 						title="Archivversion öffnen"
 					>
 						{#if doc.hasThumbnail}
-							<DocumentThumbnail
-								src={thumbnailUrl(doc.id)}
-								class="aspect-square w-full object-cover"
-							/>
+							<DocumentThumbnail documentId={doc.id} class="aspect-square w-full object-cover" />
 						{:else if status === 'pending'}
 							<div
 								class="flex aspect-square w-full items-center justify-center text-neutral-400 dark:text-neutral-500"
