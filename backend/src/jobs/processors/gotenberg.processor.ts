@@ -26,11 +26,13 @@ export class GotenbergProcessor extends WorkerHost {
 
   async process(job: Job<PdfConversionJobData>): Promise<void> {
     const { documentId } = job.data;
+    let ownerId: string | undefined;
     this.logger.log(`Processing PDF conversion job ${job.id}: ${documentId}`);
 
     try {
       const doc = await this.documentRepository.findById(documentId);
       if (!doc) throw new Error(`Document ${documentId} not found`);
+      ownerId = doc.ownerId;
 
       const originalPath = await this.storageService.resolveFilePath(
         documentId,
@@ -63,10 +65,14 @@ export class GotenbergProcessor extends WorkerHost {
         jobError.stack,
       );
       const isFinalAttempt = job.attemptsMade + 1 >= (job.opts.attempts ?? 1);
-      if (isFinalAttempt) {
-        this.eventService.publish(APP_EVENTS.DOCUMENT_THUMBNAIL_FAILED, {
-          documentId,
-        });
+      if (isFinalAttempt && ownerId) {
+        this.eventService.publish(
+          ownerId,
+          APP_EVENTS.DOCUMENT_THUMBNAIL_FAILED,
+          {
+            documentId,
+          },
+        );
       }
       throw jobError;
     }

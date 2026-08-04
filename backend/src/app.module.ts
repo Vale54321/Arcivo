@@ -4,6 +4,8 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { AppConfigModule } from './config/config.module';
 import { DocumentModule } from './document/document.module';
 import { EventModule } from './events/event.module';
+import { UserModule } from './user/user.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -13,7 +15,9 @@ import { EventModule } from './events/event.module';
       exclude: ['/api/{*any}'],
     }),
     EventModule,
+    AuthModule,
     DocumentModule,
+    UserModule,
   ],
 })
 export class AppModule {}

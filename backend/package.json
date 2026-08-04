@@ -28,17 +28,23 @@
     "@nestjs/common": "^11.1.28",
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.1.28",
+    "@nestjs/jwt": "^11.0.2",
+    "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.1.28",
     "@nestjs/serve-static": "^5.0.5",
     "@nestjs/swagger": "^11.4.6",
+    "argon2": "^0.45.1",
     "bullmq": "^5.81.3",
     "chromiumly": "^5.2.1",
+    "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "joi": "^18.2.3",
     "kysely": "^0.29.4",
     "mime": "^4.1.0",
     "multer": "^2.2.0",
     "node-poppler": "^10.0.1",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1",
     "pg": "^8.22.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
@@ -55,6 +61,7 @@
     "@types/mime": "^3.0.4",
     "@types/multer": "^2.2.0",
     "@types/node": "^26.1.2",
+    "@types/passport-jwt": "^4.0.1",
     "@types/pg": "^8.20.0",
     "@types/supertest": "^7.2.1",
     "eslint": "^10.8.0",
@@ -91,6 +98,10 @@
     },
     "collectCoverageFrom": [
       "**/*.(t|j)s"
+    ],
+    "moduleDirectories": [
+      "node_modules",
+      "<rootDir>"
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"

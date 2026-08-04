@@ -1,10 +1,16 @@
 import { PUBLIC_API_BASE_URL } from '$env/static/public';
+import { clearAccessToken, getAccessToken } from '$lib/auth';
 import type {
+	AccessTokenResponse,
+	CreateUserInput,
 	Document,
 	DocumentDetails,
 	SearchResult,
+	ResetUserPasswordInput,
+	UpdateUserInput,
 	UploadDocumentOptions,
-	UploadResult
+	UploadResult,
+	User
 } from './types';
 
 export type FetchLike = typeof globalThis.fetch;
@@ -12,6 +18,7 @@ export type FetchLike = typeof globalThis.fetch;
 export interface ApiClientOptions {
 	baseUrl?: string;
 	fetch?: FetchLike;
+	accessToken?: () => string | null;
 }
 
 interface ApiErrorPayload {
@@ -21,6 +28,8 @@ interface ApiErrorPayload {
 
 const API_PATHS = {
 	documents: '/v1/document',
+	login: '/v1/auth/login',
+	users: '/v1/users',
 	events: '/v1/events'
 } as const;
 
@@ -39,13 +48,63 @@ export class ApiError extends Error {
 export class ArcivoApi {
 	private readonly baseUrl: string;
 	private readonly fetcher: FetchLike;
+	private readonly accessToken: () => string | null;
 
 	constructor({
 		baseUrl = PUBLIC_API_BASE_URL || '/api',
-		fetch = globalThis.fetch
+		fetch = globalThis.fetch,
+		accessToken = getAccessToken
 	}: ApiClientOptions = {}) {
 		this.baseUrl = baseUrl.replace(/\/+$/, '');
 		this.fetcher = fetch;
+		this.accessToken = accessToken;
+	}
+
+	login(email: string, password: string): Promise<AccessTokenResponse> {
+		return this.request<AccessTokenResponse>(API_PATHS.login, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ email, password })
+		});
+	}
+
+	getCurrentUser(signal?: AbortSignal): Promise<User> {
+		return this.request<User>(`${API_PATHS.users}/me`, { signal });
+	}
+
+	getUsers(signal?: AbortSignal): Promise<User[]> {
+		return this.request<User[]>(API_PATHS.users, { signal });
+	}
+
+	createUser(input: CreateUserInput, signal?: AbortSignal): Promise<User> {
+		return this.request<User>(API_PATHS.users, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(input),
+			signal
+		});
+	}
+
+	updateUser(id: string, input: UpdateUserInput, signal?: AbortSignal): Promise<User> {
+		return this.request<User>(`${API_PATHS.users}/${encodeURIComponent(id)}`, {
+			method: 'PATCH',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(input),
+			signal
+		});
+	}
+
+	resetUserPassword(
+		id: string,
+		input: ResetUserPasswordInput,
+		signal?: AbortSignal
+	): Promise<void> {
+		return this.request<void>(`${API_PATHS.users}/${encodeURIComponent(id)}/password`, {
+			method: 'PATCH',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(input),
+			signal
+		});
 	}
 
 	getDocuments(signal?: AbortSignal): Promise<Document[]> {
@@ -68,6 +127,20 @@ export class ArcivoApi {
 			method: 'DELETE',
 			signal
 		});
+	}
+
+	getThumbnail(id: string, signal?: AbortSignal): Promise<Blob> {
+		return this.requestBlob(`${API_PATHS.documents}/${encodeURIComponent(id)}/thumbnail`, {
+			signal
+		});
+	}
+
+	downloadOriginal(id: string, signal?: AbortSignal): Promise<Blob> {
+		return this.requestBlob(`${API_PATHS.documents}/${encodeURIComponent(id)}/file`, { signal });
+	}
+
+	downloadArchive(id: string, signal?: AbortSignal): Promise<Blob> {
+		return this.requestBlob(`${API_PATHS.documents}/${encodeURIComponent(id)}/archive`, { signal });
 	}
 
 	uploadDocument(file: File, options: UploadDocumentOptions): Promise<UploadResult> {
@@ -109,10 +182,12 @@ export class ArcivoApi {
 	private async request<T>(path: string, init: RequestInit = {}): Promise<T> {
 		const headers = new Headers(init.headers);
 		headers.set('Accept', 'application/json');
+		this.applyAuthorization(headers);
 
 		const response = await this.fetcher(this.url(path), { ...init, headers });
 
 		if (!response.ok) {
+			if (response.status === 401) clearAccessToken();
 			throw await this.toApiError(response);
 		}
 
@@ -121,6 +196,19 @@ export class ArcivoApi {
 		}
 
 		return (await response.json()) as T;
+	}
+
+	private async requestBlob(path: string, init: RequestInit = {}): Promise<Blob> {
+		const headers = new Headers(init.headers);
+		headers.set('Accept', '*/*');
+		this.applyAuthorization(headers);
+
+		const response = await this.fetcher(this.url(path), { ...init, headers });
+		if (!response.ok) {
+			if (response.status === 401) clearAccessToken();
+			throw await this.toApiError(response);
+		}
+		return await response.blob();
 	}
 
 	private uploadWithProgress(
@@ -139,6 +227,8 @@ export class ArcivoApi {
 			for (const [name, value] of Object.entries(this.uploadHeaders(file, options.checksum))) {
 				request.setRequestHeader(name, value);
 			}
+			const accessToken = this.accessToken();
+			if (accessToken) request.setRequestHeader('Authorization', `Bearer ${accessToken}`);
 
 			request.upload.addEventListener('progress', (event) => {
 				if (event.lengthComputable) {
@@ -178,6 +268,11 @@ export class ArcivoApi {
 			'x-arcivo-checksum': checksum,
 			'x-arcivo-filename': encodeURIComponent(file.name)
 		};
+	}
+
+	private applyAuthorization(headers: Headers): void {
+		const accessToken = this.accessToken();
+		if (accessToken) headers.set('Authorization', `Bearer ${accessToken}`);
 	}
 
 	private url(path: string): string {

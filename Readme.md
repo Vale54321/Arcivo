@@ -10,7 +10,19 @@ Create a `.env` file in the project root with the following variables:
 
 ```env
 DB_PASSWORD=<PASSWORD>
+JWT_SECRET=<generate-with-openssl-rand-base64-48>
 ```
+
+`JWT_SECRET` must be a unique, random value of at least 32 characters. Do not
+reuse the development value in a deployed environment.
+
+The initial migration seeds an administrator for local setup:
+
+- Email: `admin@example.com`
+- Password: `changeme`
+
+Change this password before using the account outside a local development
+environment.
 
 ### 2. Start the development stack
 

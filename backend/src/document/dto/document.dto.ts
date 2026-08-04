@@ -10,3 +10,13 @@ export class DocumentUploadDto {
   @IsOptional()
   fileCreatedAt?: string;
 }
+
+export class UpdateDocumentDto {
+  @ApiPropertyOptional({
+    description: 'Document creation time in ISO 8601 format',
+    example: '2026-07-27T17:16:04.000Z',
+  })
+  @IsISO8601()
+  @IsOptional()
+  fileCreatedAt?: string;
+}

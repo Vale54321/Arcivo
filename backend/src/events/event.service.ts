@@ -1,6 +1,6 @@
 import { Injectable, type MessageEvent } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { interval, map, merge, Observable, Subject } from 'rxjs';
+import { filter, interval, map, merge, Observable, Subject } from 'rxjs';
 import {
   type AnyAppEvent,
   type AppEvent,
@@ -10,9 +10,13 @@ import {
 
 @Injectable()
 export class EventService {
-  private readonly events = new Subject<AnyAppEvent>();
+  private readonly events = new Subject<{
+    ownerId: string;
+    event: AnyAppEvent;
+  }>();
 
   publish<TName extends AppEventName>(
+    ownerId: string,
     type: TName,
     data: AppEventPayloads[TName],
   ): AppEvent<TName> {
@@ -23,13 +27,14 @@ export class EventService {
       data,
     };
 
-    this.events.next(event as AnyAppEvent);
+    this.events.next({ ownerId, event: event as AnyAppEvent });
     return event;
   }
 
-  stream(): Observable<MessageEvent> {
+  stream(ownerId: string): Observable<MessageEvent> {
     const applicationEvents = this.events.pipe(
-      map((event) => ({
+      filter((event) => event.ownerId === ownerId),
+      map(({ event }) => ({
         id: event.id,
         data: event,
       })),

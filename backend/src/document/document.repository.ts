@@ -33,6 +33,15 @@ export class DocumentRepository {
       .executeTakeFirst();
   }
 
+  async findByIdForOwner(id: string, ownerId: string) {
+    return await this.db
+      .selectFrom('documents')
+      .selectAll()
+      .where('id', '=', id)
+      .where('ownerId', '=', ownerId)
+      .executeTakeFirst();
+  }
+
   async findByChecksum(
     ownerId: string,
     checksum: string,
@@ -49,7 +58,7 @@ export class DocumentRepository {
     return result ?? null;
   }
 
-  async findAll() {
+  async findAll(ownerId: string) {
     return await this.db
       .selectFrom('documents')
       .select([
@@ -61,6 +70,7 @@ export class DocumentRepository {
         'createdAt',
         'hasThumbnail',
       ])
+      .where('ownerId', '=', ownerId)
       .orderBy('fileCreatedAt', 'desc')
       .execute();
   }
@@ -74,7 +84,17 @@ export class DocumentRepository {
       .executeTakeFirst();
   }
 
-  async search(query: string) {
+  async updateForOwner(id: string, ownerId: string, data: DocumentUpdate) {
+    return await this.db
+      .updateTable('documents')
+      .set(data)
+      .where('id', '=', id)
+      .where('ownerId', '=', ownerId)
+      .returningAll()
+      .executeTakeFirst();
+  }
+
+  async search(ownerId: string, query: string) {
     const term = `%${query}%`;
     return await this.db
       .selectFrom('documents')
@@ -91,14 +111,16 @@ export class DocumentRepository {
       .where((eb) =>
         eb.or([eb('name', 'ilike', term), eb('textContent', 'ilike', term)]),
       )
+      .where('ownerId', '=', ownerId)
       .orderBy('fileCreatedAt', 'desc')
       .execute();
   }
 
-  async delete(id: string): Promise<boolean> {
+  async deleteForOwner(id: string, ownerId: string): Promise<boolean> {
     const result = await this.db
       .deleteFrom('documents')
       .where('id', '=', id)
+      .where('ownerId', '=', ownerId)
       .executeTakeFirst();
     return result.numDeletedRows > 0n;
   }

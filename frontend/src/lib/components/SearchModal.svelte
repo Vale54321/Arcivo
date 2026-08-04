@@ -70,9 +70,16 @@
 		}
 	}
 
-	function select(doc: Document) {
+	async function select(doc: Document) {
 		saveRecent(doc);
-		window.open(api.archiveUrl(doc.id), '_blank');
+		try {
+			const blob = await api.downloadArchive(doc.id);
+			const url = URL.createObjectURL(blob);
+			window.open(url, '_blank', 'noopener');
+			window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+		} catch {
+			error = 'Das Archiv konnte nicht geöffnet werden.';
+		}
 		close();
 	}
 

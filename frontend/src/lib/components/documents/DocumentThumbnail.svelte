@@ -1,32 +1,58 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { api } from '$lib/api';
 
 	interface Props {
-		src: string;
+		documentId: string;
 		alt?: string;
 		class?: string;
 		width?: number;
 		height?: number;
 	}
 
-	let { src, alt = 'Vorschau', class: className = '', width, height }: Props = $props();
+	let { documentId, alt = 'Vorschau', class: className = '', width, height }: Props = $props();
 	let luminance = $state<'unknown' | 'light' | 'dark'>('unknown');
+	let src = $state<string | null>(null);
 
 	const sampleSize = 48;
 	const requiredAverageLuminance = 0.68;
 	const requiredMedianLuminance = 0.72;
 
 	function cacheKey() {
-		return `arcivo:thumbnail-luminance:v1:${src}`;
+		return `arcivo:thumbnail-luminance:v1:${documentId}`;
 	}
 
-	onMount(() => {
+	function restoreLuminance() {
 		try {
 			const cached = localStorage.getItem(cacheKey());
 			if (cached === 'light' || cached === 'dark') luminance = cached;
 		} catch {
 			// Storage can be unavailable in privacy modes; analysis still works.
 		}
+	}
+
+	$effect(() => {
+		let disposed = false;
+		let objectUrl: string | null = null;
+		src = null;
+		luminance = 'unknown';
+
+		void api
+			.getThumbnail(documentId)
+			.then((blob) => {
+				objectUrl = URL.createObjectURL(blob);
+				if (disposed) {
+					URL.revokeObjectURL(objectUrl);
+					return;
+				}
+				src = objectUrl;
+				restoreLuminance();
+			})
+			.catch(() => setLuminance('dark', false));
+
+		return () => {
+			disposed = true;
+			if (objectUrl) URL.revokeObjectURL(objectUrl);
+		};
 	});
 
 	function setLuminance(value: 'light' | 'dark', cache = true) {
@@ -81,20 +107,21 @@
 	}
 </script>
 
-<img
-	{src}
-	{alt}
-	{width}
-	{height}
-	crossorigin="anonymous"
-	class="{className} thumbnail-image {luminance === 'light' ? 'mostly-light' : ''} {luminance ===
-	'unknown'
-		? 'awaiting-analysis'
-		: ''}"
-	loading="lazy"
-	onload={analyzeLuminance}
-	onerror={() => setLuminance('dark', false)}
-/>
+{#if src}
+	<img
+		{src}
+		{alt}
+		{width}
+		{height}
+		class="{className} thumbnail-image {luminance === 'light' ? 'mostly-light' : ''} {luminance ===
+		'unknown'
+			? 'awaiting-analysis'
+			: ''}"
+		loading="lazy"
+		onload={analyzeLuminance}
+		onerror={() => setLuminance('dark', false)}
+	/>
+{/if}
 
 <style>
 	.thumbnail-image {
