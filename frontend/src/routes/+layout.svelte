@@ -1,4 +1,7 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
 	import { onMount } from 'svelte';
 	import './layout.css';
 	import AppHeader from '$lib/components/AppHeader.svelte';
@@ -14,6 +17,13 @@
 
 	setSidebarContext();
 	setThemeContext();
+
+	function closeDocumentViewer() {
+		documentViewer.set(null);
+		if (page.url.pathname.startsWith('/documents/')) {
+			void goto(resolve('/documents/'), { replaceState: true });
+		}
+	}
 
 	onMount(() => {
 		events.connect();
@@ -55,7 +65,7 @@
 			doc={$documentViewer.doc}
 			src={api.archiveUrl($documentViewer.doc.id)}
 			searchQuery={$documentViewer.searchQuery}
-			onClose={() => documentViewer.set(null)}
+			onClose={closeDocumentViewer}
 		/>
 	{/key}
 {/if}
