@@ -137,7 +137,7 @@
 	}
 
 	function openInNewTab(): void {
-		window.open(src, '_blank', 'noopener,noreferrer');
+		window.open(`/documents/${encodeURIComponent(doc.id)}/`, '_blank', 'noopener,noreferrer');
 	}
 
 	function download(): void {

@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { onMount } from 'svelte';
 	import { api, ApiError, type Document, type SearchResult } from '$lib/api';
 	import { documentViewer, uploadOpen, searchQuery } from '$lib/stores';
@@ -155,6 +157,9 @@
 
 	function openArchive(doc: Document) {
 		documentViewer.set({ doc });
+		if (window.location.pathname !== `/documents/${encodeURIComponent(doc.id)}/`) {
+			void goto(resolve(`/documents/${encodeURIComponent(doc.id)}/`));
+		}
 	}
 
 	function downloadArchive(doc: Document) {
