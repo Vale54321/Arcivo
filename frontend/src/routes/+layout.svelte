@@ -46,6 +46,13 @@
 		return () => events.disconnect();
 	});
 
+	function closeDocumentViewer() {
+		documentViewer.set(null);
+		if (page.url.pathname.startsWith('/documents/')) {
+			void goto(resolve('/documents/'), { replaceState: true });
+		}
+	}
+
 	onMount(() => {
 		const splash = document.getElementById('arcivo-splash');
 		if (splash) {
@@ -81,16 +88,15 @@
 			</main>
 		</div>
 	</div>
+{/if}
 
-	{#if $documentViewer}
-		{#key $documentViewer.doc.id}
-			<DocumentViewer
-				doc={$documentViewer.doc}
-				src={api.archiveUrl($documentViewer.doc.id)}
-				searchQuery={$documentViewer.searchQuery}
-				onClose={() => documentViewer.set(null)}
-			/>
-		{/key}
-	{/if}
-	</div>
-</div>
+{#if $documentViewer}
+	{#key $documentViewer.doc.id}
+		<DocumentViewer
+			doc={$documentViewer.doc}
+			src={api.archiveUrl($documentViewer.doc.id)}
+			searchQuery={$documentViewer.searchQuery}
+			onClose={closeDocumentViewer}
+		/>
+	{/key}
+{/if}

@@ -160,6 +160,9 @@
 
 	function openArchive(doc: Document) {
 		documentViewer.set({ doc });
+		if (window.location.pathname !== `/documents/${encodeURIComponent(doc.id)}/`) {
+			void goto(resolve(`/documents/${encodeURIComponent(doc.id)}/`));
+		}
 	}
 
 	async function downloadArchive(doc: Document) {

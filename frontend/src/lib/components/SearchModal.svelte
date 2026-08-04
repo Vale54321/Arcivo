@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { tick } from 'svelte';
 	import { Search } from '@lucide/svelte';
 	import { api, ApiError, type Document, type SearchResult } from '$lib/api';
@@ -87,6 +89,7 @@
 		const contentMatch =
 			'matchType' in doc && (doc.matchType === 'content' || doc.matchType === 'both');
 		documentViewer.set({ doc, searchQuery: contentMatch && term ? term : undefined });
+		void goto(resolve(`/documents/${encodeURIComponent(doc.id)}/`));
 		close();
 	}
 

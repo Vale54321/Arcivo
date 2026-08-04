@@ -20,7 +20,7 @@
 		{
 			name: 'Dokumente',
 			icon: Files,
-			href: '/'
+			href: '/documents/'
 		},
 		{ name: 'Sammlungen', icon: FolderOpen, soon: true },
 		{ name: 'Tags', icon: Tag, soon: true },
@@ -62,7 +62,7 @@
 		: '-translate-x-full lg:translate-x-0'}"
 >
 	<div class="mb-6 flex items-center justify-between px-4">
-		<a href={resolve('/')}>
+		<a href={resolve('/documents/')}>
 			<ArcivoLogo height="30px" />
 		</a>
 		<button
