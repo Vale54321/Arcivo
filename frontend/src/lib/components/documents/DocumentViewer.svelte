@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import type { PDFDocumentLoadingTask, PDFDocumentProxy } from 'pdfjs-dist';
-	import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+	import workerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url';
 	import type { Document } from '$lib/api';
 	import Spinner from '$lib/components/ui/Spinner.svelte';
 	import PdfPage from './pdf-viewer/PdfPage.svelte';
@@ -58,7 +58,7 @@
 
 	async function loadDocument(): Promise<void> {
 		try {
-			const loadedPdfjs = await import('pdfjs-dist');
+			const loadedPdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
 			loadedPdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
 			loadingTask = loadedPdfjs.getDocument({ url: src });
 			const loadedDocument = await loadingTask.promise;
