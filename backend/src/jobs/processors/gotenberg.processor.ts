@@ -29,6 +29,7 @@ import {
 @Processor(QUEUES.GOTENBERG_CONVERSION)
 export class GotenbergProcessor extends WorkerHost {
   private readonly logger = new Logger(GotenbergProcessor.name);
+  private readonly markdownConverter = new MarkdownConverter();
 
   constructor(
     private readonly documentRepository: DocumentRepository,
