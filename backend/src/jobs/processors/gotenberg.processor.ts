@@ -8,6 +8,7 @@ import { DocumentRepository } from 'document/document.repository';
 import { PdfConversionJobData } from '../interfaces/job-data.interface';
 import {
   LibreOffice,
+  HtmlConverter,
   MarkdownConverter,
   PDFEngines,
   PdfFormat,
@@ -22,6 +23,7 @@ import {
   isOfficeMimeType,
   isPdfMimeType,
   isTextMimeType,
+  isWebMimeType,
 } from 'document/utils/file-type';
 
 @Processor(QUEUES.GOTENBERG_CONVERSION)
@@ -91,6 +93,8 @@ export class GotenbergProcessor extends WorkerHost {
         files: [originalPath],
         pdfa: PdfFormat.A_2b,
       });
+    } else if (isWebMimeType(mimeType)) {
+      return this.convertHtmlToPdf(originalPath);
     } else if (mimeType === 'text/markdown') {
       return this.convertMarkdownToPdf(originalPath);
     } else if (isOfficeMimeType(mimeType) || isTextMimeType(mimeType)) {
@@ -129,5 +133,15 @@ export class GotenbergProcessor extends WorkerHost {
     } finally {
       await rm(workDir, { recursive: true, force: true });
     }
+  }
+
+  private async convertHtmlToPdf(originalPath: string): Promise<Buffer> {
+    const htmlConverter = new HtmlConverter();
+    const pdfBuffer = await htmlConverter.convert({ html: originalPath });
+
+    return PDFEngines.convert({
+      files: [pdfBuffer],
+      pdfa: PdfFormat.A_2b,
+    });
   }
 }

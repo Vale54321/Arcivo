@@ -4,6 +4,7 @@ const MIME_TYPES = {
   office: [
     // Word
     'application/msword',
+    'application/rtf',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     'application/vnd.oasis.opendocument.text',
     // Excel
@@ -16,6 +17,7 @@ const MIME_TYPES = {
     'application/vnd.oasis.opendocument.presentation',
   ],
   pdf: ['application/pdf'],
+  web: ['text/html', 'application/xhtml+xml'],
   text: ['text/plain', 'text/markdown', 'text/csv'],
 };
 
@@ -29,6 +31,8 @@ export const isOfficeMimeType = (mimeType: string): boolean =>
   MIME_TYPES.office.includes(mimeType);
 export const isPdfMimeType = (mimeType: string): boolean =>
   MIME_TYPES.pdf.includes(mimeType);
+export const isWebMimeType = (mimeType: string): boolean =>
+  MIME_TYPES.web.includes(mimeType);
 export const isTextMimeType = (mimeType: string): boolean =>
   MIME_TYPES.text.includes(mimeType);
 
