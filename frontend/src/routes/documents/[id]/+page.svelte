@@ -24,7 +24,10 @@
 			.then((doc) => {
 				if (active) {
 					openedDocumentId = doc.id;
-					documentViewer.set({ doc });
+					documentViewer.update((request) => ({
+						doc,
+						searchQuery: request?.doc.id === doc.id ? request.searchQuery : undefined
+					}));
 				}
 			})
 			.catch(() => {
