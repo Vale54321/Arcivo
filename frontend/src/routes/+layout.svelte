@@ -94,7 +94,6 @@
 	{#key $documentViewer.doc.id}
 		<DocumentViewer
 			doc={$documentViewer.doc}
-			src={api.archiveUrl($documentViewer.doc.id)}
 			searchQuery={$documentViewer.searchQuery}
 			onClose={closeDocumentViewer}
 		/>

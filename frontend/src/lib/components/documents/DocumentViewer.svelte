@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import type { PDFDocumentLoadingTask, PDFDocumentProxy } from 'pdfjs-dist';
 	import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
-	import type { Document } from '$lib/api';
+	import { api, type Document } from '$lib/api';
 	import Spinner from '$lib/components/ui/Spinner.svelte';
 	import PdfPage from './pdf-viewer/PdfPage.svelte';
 	import PdfSearchPanel from './pdf-viewer/PdfSearchPanel.svelte';
@@ -15,12 +15,10 @@
 
 	let {
 		doc,
-		src,
 		searchQuery,
 		onClose
 	}: {
 		doc: Document;
-		src: string;
 		searchQuery?: string;
 		onClose: () => void;
 	} = $props();
@@ -28,6 +26,7 @@
 	let pdfjs = $state<PdfJs>();
 	let pdfDocument = $state<PDFDocumentProxy>();
 	let loadingTask: PDFDocumentLoadingTask | undefined;
+	let pdfObjectUrl: string | undefined;
 
 	let pageNumber = $state(1);
 	let pageCount = $state(0);
@@ -42,6 +41,12 @@
 		pageNumber = page;
 	});
 
+	function loadSource(): Promise<Blob> {
+		return doc.mimeType.toLowerCase() === 'application/pdf'
+			? api.downloadOriginal(doc.id)
+			: api.downloadArchive(doc.id);
+	}
+
 	onMount(() => {
 		const previousOverflow = document.body.style.overflow;
 		document.body.style.overflow = 'hidden';
@@ -51,6 +56,7 @@
 		return () => {
 			search.destroy();
 			void loadingTask?.destroy();
+			if (pdfObjectUrl) URL.revokeObjectURL(pdfObjectUrl);
 			window.removeEventListener('wheel', onWheel);
 			document.body.style.overflow = previousOverflow;
 		};
@@ -60,7 +66,9 @@
 		try {
 			const loadedPdfjs = await import('pdfjs-dist');
 			loadedPdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
-			loadingTask = loadedPdfjs.getDocument({ url: src });
+			const source = await loadSource();
+			pdfObjectUrl = URL.createObjectURL(source);
+			loadingTask = loadedPdfjs.getDocument({ url: pdfObjectUrl });
 			const loadedDocument = await loadingTask.promise;
 
 			pdfjs = loadedPdfjs;
@@ -140,12 +148,18 @@
 		window.open(`/documents/${encodeURIComponent(doc.id)}/`, '_blank', 'noopener,noreferrer');
 	}
 
-	function download(): void {
-		const anchor = document.createElement('a');
-		anchor.href = src;
-		anchor.download = doc.name;
-		anchor.rel = 'noopener';
-		anchor.click();
+	async function download(): Promise<void> {
+		try {
+			const source = await loadSource();
+			const url = URL.createObjectURL(source);
+			const anchor = document.createElement('a');
+			anchor.href = url;
+			anchor.download = `${doc.name}.pdf`;
+			anchor.click();
+			URL.revokeObjectURL(url);
+		} catch (error) {
+			showError(error instanceof Error ? error.message : 'Unbekannter Fehler');
+		}
 	}
 
 	function showError(message: string): void {

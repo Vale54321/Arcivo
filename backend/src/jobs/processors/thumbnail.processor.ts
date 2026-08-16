@@ -10,6 +10,7 @@ import sharp from 'sharp';
 import { QUEUES } from '../job.constants';
 import { EventService } from 'events/event.service';
 import { APP_EVENTS } from 'events/event.types';
+import { isPdfMimeType } from 'document/utils/file-type';
 
 @Processor(QUEUES.THUMBNAIL_PROCESSING)
 export class ThumbnailProcessor extends WorkerHost {
@@ -34,10 +35,11 @@ export class ThumbnailProcessor extends WorkerHost {
       if (!doc) throw new Error(`Document ${documentId} not found`);
       ownerId = doc.ownerId;
 
-      const archiveFile = await this.storageService.resolveFilePath(
+      const isPdf = isPdfMimeType(doc.mimeType);
+      const sourceFile = await this.storageService.resolveFilePath(
         documentId,
-        '.pdf',
-        StorageBucket.ARCHIVE,
+        isPdf ? doc.extension : '.pdf',
+        isPdf ? StorageBucket.UPLOAD : StorageBucket.ARCHIVE,
       );
       const pngThumbnail = await this.storageService.resolveFilePath(
         documentId,
@@ -59,7 +61,7 @@ export class ThumbnailProcessor extends WorkerHost {
         pngFile: true,
       };
 
-      await this.poppler.pdfToPpm(archiveFile, pngThumbnail, options);
+      await this.poppler.pdfToPpm(sourceFile, pngThumbnail, options);
 
       await sharp(`${pngThumbnail}.png`)
         .webp({ quality: 80 })
