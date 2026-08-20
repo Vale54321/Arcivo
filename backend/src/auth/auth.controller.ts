@@ -7,8 +7,13 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { AccessTokenDto } from './dto/access-token.dto';
-import { LoginDto } from './dto/login.dto';
+import {
+  accessTokenResponseSchema,
+  loginRequestSchema,
+  type AccessTokenResponse,
+  type LoginRequest,
+} from '@arcivo/api-contracts';
+import { ZodValidationPipe } from 'common/pipes/zod-validation.pipe';
 
 @Controller('auth')
 @ApiTags('auth')
@@ -18,10 +23,12 @@ export class AuthController {
   @Post('login')
   @HttpCode(200)
   @ApiOperation({ summary: 'Authenticate with an email address and password' })
-  @ApiOkResponse({ type: AccessTokenDto })
+  @ApiOkResponse({ description: 'Signed JWT access token' })
   @ApiBadRequestResponse({ description: 'Invalid login request' })
   @ApiUnauthorizedResponse({ description: 'Invalid email or password' })
-  async login(@Body() dto: LoginDto): Promise<AccessTokenDto> {
-    return await this.authService.login(dto);
+  async login(
+    @Body(new ZodValidationPipe(loginRequestSchema)) dto: LoginRequest,
+  ): Promise<AccessTokenResponse> {
+    return accessTokenResponseSchema.parse(await this.authService.login(dto));
   }
 }

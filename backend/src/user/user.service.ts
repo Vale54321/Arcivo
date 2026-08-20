@@ -8,9 +8,12 @@ import { DatabaseError } from 'pg';
 import { BaseService } from 'logging/base.service';
 import { LoggingService } from 'logging/logging.service';
 import { UserCredentialsEntity, UserEntity } from 'database/database.types';
-import { CreateUserDto } from './dto/create-user.dto';
-import { ResetUserPasswordDto } from './dto/reset-user-password.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import type {
+  CreateUserRequest,
+  ResetUserPasswordRequest,
+  UpdateUserRequest,
+  UserResponse,
+} from '@arcivo/api-contracts';
 import { PasswordService } from './password.service';
 import { UpdateUserData, UserRepository } from './user.repository';
 
@@ -30,7 +33,7 @@ export class UserService extends BaseService {
     super(loggingService);
   }
 
-  async create(dto: CreateUserDto): Promise<UserEntity> {
+  async create(dto: CreateUserRequest): Promise<UserResponse> {
     try {
       const user = await this.userRepository.create({
         email: this.normalizeEmail(dto.email),
@@ -38,20 +41,22 @@ export class UserService extends BaseService {
         passwordHash: await this.passwordService.hash(dto.password),
       });
       this.logger.log(`Created user ${user.id}`);
-      return user;
+      return this.toResponse(user);
     } catch (error) {
       this.rethrowDatabaseConflict(error);
     }
   }
 
-  async findAll(): Promise<UserEntity[]> {
-    return await this.userRepository.findAll();
+  async findAll(): Promise<UserResponse[]> {
+    return (await this.userRepository.findAll()).map((user) =>
+      this.toResponse(user),
+    );
   }
 
-  async findById(id: string): Promise<UserEntity> {
+  async findById(id: string): Promise<UserResponse> {
     const user = await this.userRepository.findById(id);
     if (!user) throw new NotFoundException(`User ${id} not found`);
-    return user;
+    return this.toResponse(user);
   }
 
   async findByEmailForAuthentication(
@@ -62,7 +67,7 @@ export class UserService extends BaseService {
     );
   }
 
-  async update(id: string, dto: UpdateUserDto): Promise<UserEntity> {
+  async update(id: string, dto: UpdateUserRequest): Promise<UserResponse> {
     if (Object.keys(dto).length === 0) {
       throw new BadRequestException('At least one field must be provided');
     }
@@ -77,13 +82,16 @@ export class UserService extends BaseService {
       if (!user) throw new NotFoundException(`User ${id} not found`);
 
       this.logger.log(`Updated user ${id}`);
-      return user;
+      return this.toResponse(user);
     } catch (error) {
       this.rethrowDatabaseConflict(error);
     }
   }
 
-  async resetPassword(id: string, dto: ResetUserPasswordDto): Promise<void> {
+  async resetPassword(
+    id: string,
+    dto: ResetUserPasswordRequest,
+  ): Promise<void> {
     const user = await this.userRepository.updatePasswordHash(
       id,
       await this.passwordService.hash(dto.password),
@@ -95,6 +103,17 @@ export class UserService extends BaseService {
 
   private normalizeEmail(email: string): string {
     return email.trim().toLowerCase();
+  }
+
+  private toResponse(user: UserEntity): UserResponse {
+    return {
+      id: user.id,
+      email: user.email,
+      displayName: user.displayName,
+      isAdmin: user.isAdmin,
+      createdAt: user.createdAt.toISOString(),
+      updatedAt: user.updatedAt.toISOString(),
+    };
   }
 
   private rethrowDatabaseConflict(error: unknown): never {

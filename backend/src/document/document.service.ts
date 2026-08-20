@@ -9,18 +9,22 @@ import { constants } from 'node:fs';
 import 'multer';
 import { BaseService } from 'logging/base.service';
 import { LoggingService } from 'logging/logging.service';
-import { DocumentUploadDto, UpdateDocumentDto } from './dto/document.dto';
+import {
+  type DocumentResponse,
+  type DocumentSearchResultResponse,
+  type DocumentSummaryResponse,
+  type DocumentUploadRequest,
+  type DocumentUploadResponse,
+  type UpdateDocumentRequest,
+} from '@arcivo/api-contracts';
 import { FileHashService } from './services/file-hash.service';
 import { getMimeType } from './utils/file-type';
 import { DocumentRepository } from './document.repository';
 import { StorageService } from 'storage/storage.service';
 import { StorageBucket } from 'storage/storage.interface';
 import { basename, extname } from 'node:path';
-import {
-  DocumentResponseDto,
-  DocumentStatus,
-} from './dto/document.response.dto';
 import { JobService } from 'jobs/job.service';
+import { DocumentEntity } from 'database/database.types';
 
 @Injectable()
 export class DocumentService extends BaseService {
@@ -35,10 +39,10 @@ export class DocumentService extends BaseService {
   }
   async uploadDocument(
     ownerId: string,
-    dto: DocumentUploadDto,
+    dto: DocumentUploadRequest,
     file: Express.Multer.File,
     filename: string,
-  ): Promise<DocumentResponseDto> {
+  ): Promise<DocumentUploadResponse> {
     this.logger.log(`Processing document: ${filename}`);
 
     const mimeType = getMimeType(filename);
@@ -66,7 +70,7 @@ export class DocumentService extends BaseService {
         `Duplicate checksum hit for ${filename}: ${duplicate.id}`,
       );
       await this.deleteTempFile(file.path);
-      return { status: DocumentStatus.DUPLICATE, id: duplicate.id };
+      return { status: 'duplicate', id: duplicate.id };
     }
 
     try {
@@ -94,7 +98,7 @@ export class DocumentService extends BaseService {
 
       await this.jobService.addPdfConversionJob(id);
 
-      return { status: DocumentStatus.CREATED, id: id };
+      return { status: 'created', id: id };
     } catch (error) {
       await this.deleteTempFile(file.path);
 
@@ -117,10 +121,13 @@ export class DocumentService extends BaseService {
     return await this.documentRepository.findByChecksum(ownerId, checksum);
   }
 
-  async getDocumentById(ownerId: string, id: string) {
+  async getDocumentById(
+    ownerId: string,
+    id: string,
+  ): Promise<DocumentResponse> {
     const doc = await this.documentRepository.findByIdForOwner(id, ownerId);
     if (!doc) throw new NotFoundException(`Document ${id} not found`);
-    return doc;
+    return this.toDocumentResponse(doc);
   }
 
   async getDocumentThumbnailPath(ownerId: string, id: string): Promise<string> {
@@ -188,9 +195,11 @@ export class DocumentService extends BaseService {
     };
   }
 
-  async getAllDocuments(ownerId: string) {
+  async getAllDocuments(ownerId: string): Promise<DocumentSummaryResponse[]> {
     this.logger.log('Fetching all documents');
-    return await this.documentRepository.findAll(ownerId);
+    return (await this.documentRepository.findAll(ownerId)).map((document) =>
+      this.toSummaryResponse(document),
+    );
   }
 
   async deleteDocument(ownerId: string, id: string): Promise<void> {
@@ -219,7 +228,11 @@ export class DocumentService extends BaseService {
     this.logger.log(`Deleted document ${id} and associated files`);
   }
 
-  async updateDocument(ownerId: string, id: string, dto: UpdateDocumentDto) {
+  async updateDocument(
+    ownerId: string,
+    id: string,
+    dto: UpdateDocumentRequest,
+  ): Promise<DocumentResponse> {
     if (Object.keys(dto).length === 0) {
       throw new BadRequestException('At least one document field is required');
     }
@@ -233,7 +246,7 @@ export class DocumentService extends BaseService {
     if (!document) {
       throw new NotFoundException(`Document ${id} not found`);
     }
-    return document;
+    return this.toDocumentResponse(document);
   }
 
   private async deleteTempFile(filePath: string): Promise<void> {
@@ -247,7 +260,10 @@ export class DocumentService extends BaseService {
     }
   }
 
-  async searchDocuments(ownerId: string, query: string) {
+  async searchDocuments(
+    ownerId: string,
+    query: string,
+  ): Promise<DocumentSearchResultResponse[]> {
     const term = query.trim();
     this.logger.log(`Searching documents for: "${query}"`);
 
@@ -269,13 +285,7 @@ export class DocumentService extends BaseService {
       else if (isNameMatch) matchType = 'filename';
 
       return {
-        id: doc.id,
-        name: doc.name,
-        size: doc.size,
-        mimeType: doc.mimeType,
-        fileCreatedAt: doc.fileCreatedAt,
-        createdAt: doc.createdAt,
-        hasThumbnail: doc.hasThumbnail,
+        ...this.toSummaryResponse(doc),
         matchType,
       };
     });
@@ -290,5 +300,37 @@ export class DocumentService extends BaseService {
     } catch {
       throw new NotFoundException(message);
     }
+  }
+
+  private toSummaryResponse(
+    document: Pick<
+      DocumentEntity,
+      | 'id'
+      | 'name'
+      | 'size'
+      | 'mimeType'
+      | 'fileCreatedAt'
+      | 'createdAt'
+      | 'hasThumbnail'
+    >,
+  ): DocumentSummaryResponse {
+    return {
+      ...document,
+      // PostgreSQL bigint values are strings by default; file sizes are safely
+      // representable as JSON numbers for this application.
+      size: Number(document.size),
+      fileCreatedAt: document.fileCreatedAt.toISOString(),
+      createdAt: document.createdAt.toISOString(),
+    };
+  }
+
+  private toDocumentResponse(document: DocumentEntity): DocumentResponse {
+    return {
+      ...this.toSummaryResponse(document),
+      checksum: document.checksum.toJSON(),
+      extension: document.extension,
+      ownerId: document.ownerId,
+      textContent: document.textContent,
+    };
   }
 }

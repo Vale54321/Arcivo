@@ -1,0 +1,28 @@
+{
+  "name": "@arcivo/api-contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json && esbuild src/index.ts --bundle --format=esm --platform=neutral --external:zod --outfile=dist/index.mjs",
+    "test": "npm run build && node --test test/contracts.test.cjs"
+  },
+  "dependencies": {
+    "zod": "^4.1.5"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.9",
+    "typescript": "^6.0.3"
+  }
+}

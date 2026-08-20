@@ -17,7 +17,17 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: backend/package-lock.json
+          cache-dependency-path: |
+            api-contracts/package-lock.json
+            backend/package-lock.json
+
+      - name: Install contract dependencies
+        working-directory: ./api-contracts
+        run: npm ci
+
+      - name: Build API contracts
+        working-directory: ./api-contracts
+        run: npm run build
 
       - name: Install dependencies
         working-directory: ./backend
@@ -47,7 +57,17 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: |
+            api-contracts/package-lock.json
+            frontend/package-lock.json
+
+      - name: Install contract dependencies
+        working-directory: ./api-contracts
+        run: npm ci
+
+      - name: Build API contracts
+        working-directory: ./api-contracts
+        run: npm run build
 
       - name: Install dependencies
         working-directory: ./frontend
@@ -61,3 +81,7 @@ jobs:
         if: ${{ always() }}
         working-directory: ./frontend
         run: npm run check
+
+      - name: Frontend unit tests
+        working-directory: ./frontend
+        run: npm test

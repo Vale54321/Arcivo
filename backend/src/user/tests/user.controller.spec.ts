@@ -1,14 +1,13 @@
 import {
   ExecutionContext,
   INestApplication,
-  ValidationPipe,
   VersioningType,
 } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { Server } from 'node:http';
 import request from 'supertest';
 import type { Request } from 'express';
-import { UserEntity } from 'database/database.types';
+import type { UserResponse } from '@arcivo/api-contracts';
 import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
 import { AuthenticatedUser } from 'auth/interfaces/authenticated-user.interface';
 import { UserController } from '../user.controller';
@@ -26,13 +25,13 @@ describe(UserController.name, () => {
   >;
   let currentUser: AuthenticatedUser;
 
-  const user: UserEntity = {
+  const user: UserResponse = {
     id: '11111111-1111-4111-8111-111111111111',
     email: 'ada@example.com',
     displayName: 'Ada Lovelace',
     isAdmin: false,
-    createdAt: new Date('2026-08-03T00:00:00.000Z'),
-    updatedAt: new Date('2026-08-03T00:00:00.000Z'),
+    createdAt: '2026-08-03T00:00:00.000Z',
+    updatedAt: '2026-08-03T00:00:00.000Z',
   };
 
   beforeEach(async () => {
@@ -67,13 +66,6 @@ describe(UserController.name, () => {
       .compile();
 
     app = moduleRef.createNestApplication<INestApplication<Server>>();
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-      }),
-    );
     app.setGlobalPrefix('api');
     app.enableVersioning({
       type: VersioningType.URI,
@@ -97,11 +89,7 @@ describe(UserController.name, () => {
         password: 'correct horse battery staple',
       })
       .expect(201)
-      .expect({
-        ...user,
-        createdAt: user.createdAt.toISOString(),
-        updatedAt: user.updatedAt.toISOString(),
-      });
+      .expect(user);
   });
 
   it('rejects malformed user input before calling the service', async () => {
@@ -112,7 +100,12 @@ describe(UserController.name, () => {
         displayName: 'Ada Lovelace',
         unexpected: true,
       })
-      .expect(400);
+      .expect(400)
+      .expect((response) => {
+        const serializedBody = JSON.stringify(response.body as unknown);
+        expect(serializedBody).toContain('Validation failed');
+        expect(serializedBody).toContain('fieldErrors');
+      });
 
     expect(userService.create).not.toHaveBeenCalled();
   });
@@ -132,11 +125,7 @@ describe(UserController.name, () => {
     await request(app.getHttpServer())
       .get('/api/v1/users/me')
       .expect(200)
-      .expect({
-        ...user,
-        createdAt: user.createdAt.toISOString(),
-        updatedAt: user.updatedAt.toISOString(),
-      });
+      .expect(user);
 
     expect(userService.findById).toHaveBeenCalledWith(user.id);
   });

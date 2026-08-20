@@ -7,6 +7,7 @@ on:
     tags:
       - "v*"
     paths:
+      - "api-contracts/**"
       - "backend/**"
       - "frontend/**"
       - ".forgejo/workflows/arcivo-container.yml"
@@ -31,6 +32,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
+
+      - name: Install contract dependencies
+        working-directory: ./api-contracts
+        run: npm ci
+
+      - name: Build API contracts
+        working-directory: ./api-contracts
+        run: npm run build
 
       - name: Install frontend dependencies
         working-directory: ./frontend
@@ -68,7 +77,7 @@ jobs:
       - name: Build and push backend image
         uses: docker/build-push-action@v7
         with:
-          context: ./backend
+          context: .
           file: ./backend/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}

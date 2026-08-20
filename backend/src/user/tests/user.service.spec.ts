@@ -73,7 +73,11 @@ describe(UserService.name, () => {
         displayName: ' Ada Lovelace ',
         password: 'correct horse battery staple',
       }),
-    ).resolves.toEqual(user);
+    ).resolves.toEqual({
+      ...user,
+      createdAt: user.createdAt.toISOString(),
+      updatedAt: user.updatedAt.toISOString(),
+    });
 
     expect(createMock).toHaveBeenCalledWith({
       email: 'ada@example.com',

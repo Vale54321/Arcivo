@@ -2,32 +2,33 @@ import { Injectable, type MessageEvent } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { filter, interval, map, merge, Observable, Subject } from 'rxjs';
 import {
-  type AnyAppEvent,
+  appEventSchema,
   type AppEvent,
   type AppEventName,
   type AppEventPayloads,
-} from './event.types';
+  type EventFor,
+} from '@arcivo/api-contracts';
 
 @Injectable()
 export class EventService {
   private readonly events = new Subject<{
     ownerId: string;
-    event: AnyAppEvent;
+    event: AppEvent;
   }>();
 
   publish<TName extends AppEventName>(
     ownerId: string,
     type: TName,
     data: AppEventPayloads[TName],
-  ): AppEvent<TName> {
-    const event: AppEvent<TName> = {
+  ): EventFor<TName> {
+    const event = appEventSchema.parse({
       id: randomUUID(),
       type,
       occurredAt: new Date().toISOString(),
       data,
-    };
+    }) as EventFor<TName>;
 
-    this.events.next({ ownerId, event: event as AnyAppEvent });
+    this.events.next({ ownerId, event });
     return event;
   }
 

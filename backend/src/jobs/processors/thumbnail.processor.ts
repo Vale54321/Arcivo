@@ -9,7 +9,7 @@ import { Poppler } from 'node-poppler';
 import sharp from 'sharp';
 import { QUEUES } from '../job.constants';
 import { EventService } from 'events/event.service';
-import { APP_EVENTS } from 'events/event.types';
+import { APP_EVENTS } from '@arcivo/api-contracts';
 import { isPdfMimeType } from 'document/utils/file-type';
 
 @Processor(QUEUES.THUMBNAIL_PROCESSING)

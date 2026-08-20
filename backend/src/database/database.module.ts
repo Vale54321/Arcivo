@@ -1,6 +1,11 @@
 import { Global, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Kysely, ParseJSONResultsPlugin, PostgresDialect } from 'kysely';
+import {
+  CamelCasePlugin,
+  Kysely,
+  ParseJSONResultsPlugin,
+  PostgresDialect,
+} from 'kysely';
 import { Pool } from 'pg';
 import { LoggingModule } from 'logging/logging.module';
 import { DatabaseMigrationService } from './database-migration.service';
@@ -26,7 +31,7 @@ import { Database } from './database.types';
 
         return new Kysely<Database>({
           dialect,
-          plugins: [new ParseJSONResultsPlugin()],
+          plugins: [new CamelCasePlugin(), new ParseJSONResultsPlugin()],
         });
       },
     },

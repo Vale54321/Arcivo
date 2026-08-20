@@ -4,6 +4,7 @@
 	import { tick } from 'svelte';
 	import { Search } from '@lucide/svelte';
 	import { api, ApiError, type Document, type SearchResult } from '$lib/api';
+	import { documentsResponseSchema } from '@arcivo/api-contracts';
 	import { documentViewer, searchQuery } from '$lib/stores';
 	import SearchResultItem from '$lib/components/search/SearchResultItem.svelte';
 
@@ -36,7 +37,7 @@
 
 	function loadRecent(): Document[] {
 		try {
-			return JSON.parse(localStorage.getItem(RECENT_KEY) ?? '[]') as Document[];
+			return documentsResponseSchema.parse(JSON.parse(localStorage.getItem(RECENT_KEY) ?? '[]'));
 		} catch {
 			return [];
 		}

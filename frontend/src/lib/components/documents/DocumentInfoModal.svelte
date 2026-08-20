@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { File as FileIcon } from '@lucide/svelte';
-	import type { Document } from '$lib/api';
+	import type { Document, DocumentDetails } from '$lib/api';
 	import Button from '$lib/components/ui/Button.svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
 
@@ -11,7 +11,7 @@
 		formatSize,
 		onClose
 	}: {
-		infoDoc: Document | null;
+		infoDoc: Document | DocumentDetails | null;
 		mimeIcon: (mimeType: string) => typeof FileIcon;
 		mimeLabel: (mimeType: string) => string;
 		formatSize: (bytes: number) => string;
@@ -20,8 +20,8 @@
 
 	let Icon = $derived(infoDoc ? mimeIcon(infoDoc.mimeType) : null);
 
-	function checksumToHex(doc: Document): string {
-		if (!doc.checksum) return '–';
+	function checksumToHex(doc: Document | DocumentDetails): string {
+		if (!('checksum' in doc)) return '–';
 		return `sha256:${Array.from(doc.checksum.data)
 			.map((byte) => byte.toString(16).padStart(2, '0'))
 			.join('')}`;
@@ -90,7 +90,7 @@
 			<textarea
 				id="info-text"
 				readonly
-				value={infoDoc.textContent ?? ''}
+				value={'textContent' in infoDoc ? (infoDoc.textContent ?? '') : ''}
 				placeholder="Kein Textinhalt verfügbar."
 				rows="6"
 				class="min-h-24 w-full cursor-default resize-y rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2.5 font-mono text-sm leading-relaxed text-neutral-700 placeholder-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:placeholder-neutral-500"

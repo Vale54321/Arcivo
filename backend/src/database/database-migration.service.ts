@@ -17,7 +17,9 @@ export class DatabaseMigrationService implements OnModuleInit {
 
   async onModuleInit(): Promise<void> {
     const migrator = new Migrator({
-      db: this.db,
+      // Historical migrations contain physical identifier spellings and must
+      // never be transformed by application query plugins.
+      db: this.db.withoutPlugins(),
       provider: new FileMigrationProvider({
         fs,
         path,

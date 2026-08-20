@@ -1,0 +1,9 @@
+.git
+.env
+data
+frontend
+**/node_modules
+**/dist
+**/build
+**/.svelte-kit
+**/coverage

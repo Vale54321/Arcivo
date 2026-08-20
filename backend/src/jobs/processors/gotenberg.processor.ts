@@ -18,7 +18,7 @@ import { StorageService } from 'storage/storage.service';
 import { JobService } from '../job.service';
 import { QUEUES } from '../job.constants';
 import { EventService } from 'events/event.service';
-import { APP_EVENTS } from 'events/event.types';
+import { APP_EVENTS } from '@arcivo/api-contracts';
 import {
   isOfficeMimeType,
   isPdfMimeType,

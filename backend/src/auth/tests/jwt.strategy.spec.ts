@@ -1,19 +1,19 @@
 import { ConfigService } from '@nestjs/config';
 import { NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { UserEntity } from 'database/database.types';
+import type { UserResponse } from '@arcivo/api-contracts';
 import { UserService } from 'user/user.service';
 import { JwtStrategy } from '../strategies/jwt.strategy';
 
 jest.mock('kysely', () => ({ Kysely: class Kysely {} }));
 
 describe(JwtStrategy.name, () => {
-  const user: UserEntity = {
+  const user: UserResponse = {
     id: '11111111-1111-4111-8111-111111111111',
     email: 'admin@example.com',
     displayName: 'Admin',
     isAdmin: true,
-    createdAt: new Date('2026-08-03T00:00:00.000Z'),
-    updatedAt: new Date('2026-08-03T00:00:00.000Z'),
+    createdAt: '2026-08-03T00:00:00.000Z',
+    updatedAt: '2026-08-03T00:00:00.000Z',
   };
 
   let findById: jest.MockedFunction<UserService['findById']>;

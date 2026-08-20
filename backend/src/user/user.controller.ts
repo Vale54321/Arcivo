@@ -5,7 +5,6 @@ import {
   Get,
   HttpCode,
   Param,
-  ParseUUIDPipe,
   Patch,
   Post,
   UseGuards,
@@ -29,10 +28,18 @@ import {
 import { CurrentUser } from 'auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
 import type { AuthenticatedUser } from 'auth/interfaces/authenticated-user.interface';
-import { CreateUserDto } from './dto/create-user.dto';
-import { ResetUserPasswordDto } from './dto/reset-user-password.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { UserResponseDto } from './dto/user.response.dto';
+import {
+  createUserRequestSchema,
+  idParamsSchema,
+  resetUserPasswordRequestSchema,
+  updateUserRequestSchema,
+  type CreateUserRequest,
+  type IdParams,
+  type ResetUserPasswordRequest,
+  type UpdateUserRequest,
+  type UserResponse,
+} from '@arcivo/api-contracts';
+import { ZodValidationPipe } from 'common/pipes/zod-validation.pipe';
 import { UserService } from './user.service';
 
 @Controller('users')
@@ -48,10 +55,13 @@ export class UserController {
     description: 'Requires an authenticated administrator account.',
   })
   @ApiAdminOnly()
-  @ApiCreatedResponse({ type: UserResponseDto })
+  @ApiCreatedResponse({ description: 'User created' })
   @ApiBadRequestResponse({ description: 'Invalid user data' })
   @ApiConflictResponse({ description: 'Email address is already in use' })
-  async create(@Body() dto: CreateUserDto): Promise<UserResponseDto> {
+  async create(
+    @Body(new ZodValidationPipe(createUserRequestSchema))
+    dto: CreateUserRequest,
+  ): Promise<UserResponse> {
     return await this.userService.create(dto);
   }
 
@@ -61,17 +71,17 @@ export class UserController {
     description: 'Requires an authenticated administrator account.',
   })
   @ApiAdminOnly()
-  @ApiOkResponse({ type: [UserResponseDto] })
-  async findAll(): Promise<UserResponseDto[]> {
+  @ApiOkResponse({ description: 'Users returned' })
+  async findAll(): Promise<UserResponse[]> {
     return await this.userService.findAll();
   }
 
   @Get('me')
   @ApiOperation({ summary: 'Get the current user' })
-  @ApiOkResponse({ type: UserResponseDto })
+  @ApiOkResponse({ description: 'Current user returned' })
   async findCurrentUser(
     @CurrentUser() user: AuthenticatedUser,
-  ): Promise<UserResponseDto> {
+  ): Promise<UserResponse> {
     return await this.userService.findById(user.id);
   }
 
@@ -83,13 +93,13 @@ export class UserController {
   })
   @ApiAdminOrSelf()
   @ApiParam({ name: 'id', description: 'User UUID' })
-  @ApiOkResponse({ type: UserResponseDto })
+  @ApiOkResponse({ description: 'User returned' })
   @ApiBadRequestResponse({ description: 'Invalid user UUID' })
   @ApiNotFoundResponse({ description: 'User not found' })
   async findById(
-    @Param('id', new ParseUUIDPipe()) id: string,
-  ): Promise<UserResponseDto> {
-    return await this.userService.findById(id);
+    @Param(new ZodValidationPipe(idParamsSchema)) params: IdParams,
+  ): Promise<UserResponse> {
+    return await this.userService.findById(params.id);
   }
 
   @Patch(':id/password')
@@ -104,10 +114,11 @@ export class UserController {
   @ApiNotFoundResponse({ description: 'User not found' })
   @HttpCode(204)
   async resetPassword(
-    @Param('id', new ParseUUIDPipe()) id: string,
-    @Body() dto: ResetUserPasswordDto,
+    @Param(new ZodValidationPipe(idParamsSchema)) params: IdParams,
+    @Body(new ZodValidationPipe(resetUserPasswordRequestSchema))
+    dto: ResetUserPasswordRequest,
   ): Promise<void> {
-    await this.userService.resetPassword(id, dto);
+    await this.userService.resetPassword(params.id, dto);
   }
 
   @Patch(':id')
@@ -118,20 +129,21 @@ export class UserController {
   })
   @ApiAdminOrSelf()
   @ApiParam({ name: 'id', description: 'User UUID' })
-  @ApiOkResponse({ type: UserResponseDto })
+  @ApiOkResponse({ description: 'User updated' })
   @ApiBadRequestResponse({ description: 'Invalid user data or UUID' })
   @ApiNotFoundResponse({ description: 'User not found' })
   @ApiConflictResponse({ description: 'Email address is already in use' })
   async update(
-    @Param('id', new ParseUUIDPipe()) id: string,
+    @Param(new ZodValidationPipe(idParamsSchema)) params: IdParams,
     @CurrentUser() currentUser: AuthenticatedUser,
-    @Body() dto: UpdateUserDto,
-  ): Promise<UserResponseDto> {
+    @Body(new ZodValidationPipe(updateUserRequestSchema))
+    dto: UpdateUserRequest,
+  ): Promise<UserResponse> {
     if (!currentUser.isAdmin && dto.isAdmin !== undefined) {
       throw new ForbiddenException(
         'Only administrators can change admin status',
       );
     }
-    return await this.userService.update(id, dto);
+    return await this.userService.update(params.id, dto);
   }
 }

@@ -1,73 +1,35 @@
-export interface SerializedBuffer {
-	type: 'Buffer';
-	data: number[];
-}
+import type {
+	AccessTokenResponse,
+	CreateUserRequest,
+	DocumentMatchType,
+	DocumentResponse,
+	DocumentSearchResultResponse,
+	DocumentSummaryResponse,
+	DocumentUploadResponse,
+	DocumentUploadStatus,
+	ResetUserPasswordRequest,
+	SerializedBuffer,
+	UpdateUserRequest,
+	UserResponse
+} from '@arcivo/api-contracts';
 
-export interface Document {
-	id: string;
-	name: string;
-	mimeType: string;
-	size: number;
-	fileCreatedAt: string;
-	createdAt: string;
-	hasThumbnail: boolean;
-	extension?: string;
-	ownerId?: string;
-	textContent?: string | null;
-	checksum?: SerializedBuffer;
-}
+// Compatibility names for UI code; serialized shapes come from the contract package.
+export type Document = DocumentSummaryResponse;
+export type DocumentDetails = DocumentResponse;
+export type SearchResult = DocumentSearchResultResponse;
+export type UploadResult = DocumentUploadResponse;
+export type UploadStatus = DocumentUploadStatus;
+export type MatchType = DocumentMatchType;
+export type User = UserResponse;
+export type CreateUserInput = CreateUserRequest;
+export type UpdateUserInput = UpdateUserRequest;
+export type ResetUserPasswordInput = ResetUserPasswordRequest;
+export type { AccessTokenResponse, SerializedBuffer };
 
-export interface DocumentDetails extends Document {
-	extension: string;
-	ownerId: string;
-	textContent: string | null;
-	checksum: SerializedBuffer;
-}
-
-export type UploadStatus = 'created' | 'duplicate';
-
-export interface UploadResult {
-	status: UploadStatus;
-	id: string;
-}
-
-export type MatchType = 'filename' | 'content' | 'both';
-
-export interface SearchResult extends Document {
-	matchType: MatchType;
-}
-
+/** Browser transport options; these are not serialized as an API JSON payload. */
 export interface UploadDocumentOptions {
 	checksum: string;
 	fileCreatedAt?: string;
 	onProgress?: (percent: number) => void;
 	signal?: AbortSignal;
-}
-
-export interface AccessTokenResponse {
-	accessToken: string;
-}
-
-export interface User {
-	id: string;
-	email: string;
-	displayName: string;
-	isAdmin: boolean;
-	createdAt: string;
-	updatedAt: string;
-}
-
-export interface UpdateUserInput {
-	email?: string;
-	displayName?: string;
-}
-
-export interface CreateUserInput {
-	email: string;
-	displayName: string;
-	password: string;
-}
-
-export interface ResetUserPasswordInput {
-	password: string;
 }

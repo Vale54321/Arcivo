@@ -3,8 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { UserEntity } from 'database/database.types';
 import { UserService } from 'user/user.service';
 import { PasswordService } from 'user/password.service';
-import { AccessTokenDto } from './dto/access-token.dto';
-import { LoginDto } from './dto/login.dto';
+import type { AccessTokenResponse, LoginRequest } from '@arcivo/api-contracts';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 
 const DUMMY_PASSWORD_HASH =
@@ -18,7 +17,7 @@ export class AuthService {
     private readonly passwordService: PasswordService,
   ) {}
 
-  async login(dto: LoginDto): Promise<AccessTokenDto> {
+  async login(dto: LoginRequest): Promise<AccessTokenResponse> {
     const user = await this.userService.findByEmailForAuthentication(dto.email);
     const isPasswordValid = await this.passwordService.verify(
       user?.passwordHash ?? DUMMY_PASSWORD_HASH,
@@ -33,7 +32,7 @@ export class AuthService {
 
   async issueAccessToken(
     user: Pick<UserEntity, 'id' | 'email' | 'isAdmin'>,
-  ): Promise<AccessTokenDto> {
+  ): Promise<AccessTokenResponse> {
     const payload: JwtPayload = {
       sub: user.id,
       email: user.email,

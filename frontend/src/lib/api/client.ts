@@ -1,5 +1,15 @@
 import { PUBLIC_API_BASE_URL } from '$env/static/public';
 import { clearAccessToken, getAccessToken } from '$lib/auth';
+import {
+	accessTokenResponseSchema,
+	apiErrorResponseSchema,
+	documentResponseSchema,
+	documentSearchResultsResponseSchema,
+	documentsResponseSchema,
+	documentUploadResponseSchema,
+	userResponseSchema,
+	usersResponseSchema
+} from '@arcivo/api-contracts';
 import type {
 	AccessTokenResponse,
 	CreateUserInput,
@@ -21,9 +31,8 @@ export interface ApiClientOptions {
 	accessToken?: () => string | null;
 }
 
-interface ApiErrorPayload {
-	message?: string | string[];
-	error?: string;
+interface ResponseSchema<T> {
+	parse(value: unknown): T;
 }
 
 const API_PATHS = {
@@ -61,7 +70,7 @@ export class ArcivoApi {
 	}
 
 	login(email: string, password: string): Promise<AccessTokenResponse> {
-		return this.request<AccessTokenResponse>(API_PATHS.login, {
+		return this.request(accessTokenResponseSchema, API_PATHS.login, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ email, password })
@@ -69,15 +78,15 @@ export class ArcivoApi {
 	}
 
 	getCurrentUser(): Promise<User> {
-		return this.request<User>(`${API_PATHS.users}/me`);
+		return this.request(userResponseSchema, `${API_PATHS.users}/me`);
 	}
 
 	getUsers(): Promise<User[]> {
-		return this.request<User[]>(API_PATHS.users);
+		return this.request(usersResponseSchema, API_PATHS.users);
 	}
 
 	createUser(input: CreateUserInput): Promise<User> {
-		return this.request<User>(API_PATHS.users, {
+		return this.request(userResponseSchema, API_PATHS.users, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(input)
@@ -85,7 +94,7 @@ export class ArcivoApi {
 	}
 
 	updateUser(id: string, input: UpdateUserInput): Promise<User> {
-		return this.request<User>(`${API_PATHS.users}/${encodeURIComponent(id)}`, {
+		return this.request(userResponseSchema, `${API_PATHS.users}/${encodeURIComponent(id)}`, {
 			method: 'PATCH',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(input)
@@ -93,7 +102,7 @@ export class ArcivoApi {
 	}
 
 	resetUserPassword(id: string, input: ResetUserPasswordInput): Promise<void> {
-		return this.request<void>(`${API_PATHS.users}/${encodeURIComponent(id)}/password`, {
+		return this.requestNoContent(`${API_PATHS.users}/${encodeURIComponent(id)}/password`, {
 			method: 'PATCH',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(input)
@@ -101,20 +110,23 @@ export class ArcivoApi {
 	}
 
 	getDocuments(): Promise<Document[]> {
-		return this.request<Document[]>(API_PATHS.documents);
+		return this.request(documentsResponseSchema, API_PATHS.documents);
 	}
 
 	getDocument(id: string): Promise<DocumentDetails> {
-		return this.request<DocumentDetails>(`${API_PATHS.documents}/${encodeURIComponent(id)}`);
+		return this.request(documentResponseSchema, `${API_PATHS.documents}/${encodeURIComponent(id)}`);
 	}
 
 	searchDocuments(query: string): Promise<SearchResult[]> {
 		const search = new URLSearchParams({ q: query });
-		return this.request<SearchResult[]>(`${API_PATHS.documents}/search?${search}`);
+		return this.request(
+			documentSearchResultsResponseSchema,
+			`${API_PATHS.documents}/search?${search}`
+		);
 	}
 
 	deleteDocument(id: string): Promise<void> {
-		return this.request<void>(`${API_PATHS.documents}/${encodeURIComponent(id)}`, {
+		return this.requestNoContent(`${API_PATHS.documents}/${encodeURIComponent(id)}`, {
 			method: 'DELETE'
 		});
 	}
@@ -145,7 +157,7 @@ export class ArcivoApi {
 			return this.uploadWithProgress(file, formData, options);
 		}
 
-		return this.request<UploadResult>(API_PATHS.documents, {
+		return this.request(documentUploadResponseSchema, API_PATHS.documents, {
 			method: 'POST',
 			headers: this.uploadHeaders(file, options.checksum),
 			body: formData,
@@ -169,7 +181,11 @@ export class ArcivoApi {
 		return this.url(API_PATHS.events);
 	}
 
-	private async request<T>(path: string, init: RequestInit = {}): Promise<T> {
+	private async request<T>(
+		schema: ResponseSchema<T>,
+		path: string,
+		init: RequestInit = {}
+	): Promise<T> {
 		const headers = new Headers(init.headers);
 		headers.set('Accept', 'application/json');
 		this.applyAuthorization(headers);
@@ -181,11 +197,21 @@ export class ArcivoApi {
 			throw await this.toApiError(response);
 		}
 
-		if (response.status === 204) {
-			return undefined as T;
-		}
+		return schema.parse(await response.json());
+	}
 
-		return (await response.json()) as T;
+	private async requestNoContent(path: string, init: RequestInit = {}): Promise<void> {
+		const headers = new Headers(init.headers);
+		headers.set('Accept', 'application/json');
+		this.applyAuthorization(headers);
+		const response = await this.fetcher(this.url(path), { ...init, headers });
+		if (!response.ok) {
+			if (response.status === 401) clearAccessToken();
+			throw await this.toApiError(response);
+		}
+		if (response.status !== 204) {
+			throw new ApiError(response.status, 'Expected an empty response');
+		}
 	}
 
 	private async requestBlob(path: string, init: RequestInit = {}): Promise<Blob> {
@@ -230,7 +256,7 @@ export class ArcivoApi {
 				const payload = this.parseTextPayload(request.responseText);
 
 				if (request.status >= 200 && request.status < 300) {
-					resolve(payload as UploadResult);
+					resolve(documentUploadResponseSchema.parse(payload));
 					return;
 				}
 
@@ -280,25 +306,13 @@ export class ArcivoApi {
 	}
 
 	private apiErrorFromPayload(status: number, statusText: string, payload: unknown): ApiError {
-		const apiPayload = this.isApiErrorPayload(payload) ? payload : undefined;
+		const parsedPayload = apiErrorResponseSchema.safeParse(payload);
+		const apiPayload = parsedPayload.success ? parsedPayload.data : undefined;
 		const message = Array.isArray(apiPayload?.message)
 			? apiPayload.message.join(', ')
 			: (apiPayload?.message ?? apiPayload?.error ?? statusText ?? 'Request failed');
 
 		return new ApiError(status, message, payload);
-	}
-
-	private isApiErrorPayload(value: unknown): value is ApiErrorPayload {
-		if (typeof value !== 'object' || value === null) return false;
-
-		const payload = value as Record<string, unknown>;
-		const messageIsValid =
-			payload.message === undefined ||
-			typeof payload.message === 'string' ||
-			(Array.isArray(payload.message) && payload.message.every((item) => typeof item === 'string'));
-		const errorIsValid = payload.error === undefined || typeof payload.error === 'string';
-
-		return messageIsValid && errorIsValid;
 	}
 
 	private parseTextPayload(value: string): unknown {

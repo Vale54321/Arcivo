@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: backend
+        working-directory: .
 
     steps:
       - name: Check out repository
@@ -20,10 +20,26 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: backend/package-lock.json
+          cache-dependency-path: |
+            api-contracts/package-lock.json
+            backend/package-lock.json
 
-      - name: Install dependencies
+      - name: Install contract dependencies
+        working-directory: ./api-contracts
+        run: npm ci
+
+      - name: Test API contracts
+        working-directory: ./api-contracts
+        run: npm test
+
+      - name: Install backend dependencies
+        working-directory: ./backend
         run: npm ci
 
       - name: Run unit tests
+        working-directory: ./backend
         run: npm test -- --runInBand
+
+      - name: Test database naming contract
+        working-directory: ./backend
+        run: npm run test:database

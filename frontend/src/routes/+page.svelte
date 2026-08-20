@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { onMount } from 'svelte';
-	import { api, ApiError, type Document, type SearchResult } from '$lib/api';
+	import { api, ApiError, type Document, type DocumentDetails, type SearchResult } from '$lib/api';
 	import { documentViewer, uploadOpen, searchQuery } from '$lib/stores';
 	import { events } from '$lib/events';
 	import { getAccessToken } from '$lib/auth';
@@ -42,7 +42,7 @@
 	let confirmDoc = $state<Document | null>(null);
 	let deleteLoading = $state(false);
 	let ctxMenu = $state<{ x: number; y: number; doc: Document } | null>(null);
-	let infoDoc = $state<Document | null>(null);
+	let infoDoc = $state<Document | DocumentDetails | null>(null);
 	let thumbnailStates = $state<Record<string, 'pending' | 'failed'>>({});
 
 	let displayDocs = $derived(activeSearch ? searchResults : docs);
@@ -300,7 +300,6 @@
 	function removeUploadResult(index: number) {
 		uploadResults = uploadResults.filter((_, currentIndex) => currentIndex !== index);
 	}
-
 </script>
 
 <ConfirmDialog

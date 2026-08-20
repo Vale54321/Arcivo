@@ -10,10 +10,7 @@ import type { Request, Response } from 'express';
 import { unlink } from 'node:fs/promises';
 import { of } from 'rxjs';
 import 'multer';
-import {
-  DocumentStatus,
-  type DocumentResponseDto,
-} from '../dto/document.response.dto';
+import type { DocumentUploadResponse } from '@arcivo/api-contracts';
 import { DocumentService } from '../document.service';
 import type { AuthenticatedUser } from 'auth/interfaces/authenticated-user.interface';
 import { getMimeType, isSupportedMimeType } from '../utils/file-type';
@@ -64,8 +61,8 @@ export class DocumentUploadInterceptor implements NestInterceptor {
         const tempPath = req.files?.documentData?.[0]?.path || undefined;
         if (tempPath) await this.deleteTempFile(tempPath);
         res.status(200);
-        return of<DocumentResponseDto>({
-          status: DocumentStatus.DUPLICATE,
+        return of<DocumentUploadResponse>({
+          status: 'duplicate',
           id: duplicate.id,
         });
       }

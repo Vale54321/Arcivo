@@ -1,10 +1,11 @@
 import { writable, type Readable } from 'svelte/store';
-import type { AppEvent, AppEventName, AppEventPayloads } from './types';
+import { appEventSchema } from '@arcivo/api-contracts';
+import type { AppEvent, AppEventName, AppEventPayloads, AppEventFor } from './types';
 
 export type EventConnectionStatus = 'idle' | 'connecting' | 'open' | 'reconnecting' | 'closed';
 export type EventHandler<TName extends AppEventName> = (
 	data: AppEventPayloads[TName],
-	event: AppEvent<TName>
+	event: AppEventFor<TName>
 ) => void;
 export type AnyEventHandler = (event: AppEvent) => void;
 
@@ -41,11 +42,11 @@ export class EventStreamClient {
 
 	on<TName extends AppEventName>(type: TName, handler: EventHandler<TName>): () => void {
 		const handlers = this.handlers.get(type) ?? new Set<EventHandler<AppEventName>>();
-		handlers.add(handler as EventHandler<AppEventName>);
+		handlers.add(handler as unknown as EventHandler<AppEventName>);
 		this.handlers.set(type, handlers);
 
 		return () => {
-			handlers.delete(handler as EventHandler<AppEventName>);
+			handlers.delete(handler as unknown as EventHandler<AppEventName>);
 			if (handlers.size === 0) this.handlers.delete(type);
 		};
 	}
@@ -148,20 +149,15 @@ export class EventStreamClient {
 	}
 
 	private dispatch(data: string): void {
-		let event: AppEvent;
-
 		try {
-			event = JSON.parse(data) as AppEvent;
+			const event = appEventSchema.parse(JSON.parse(data));
+			this.notify(event);
 		} catch {
 			console.warn('Ignoring malformed SSE event', data);
-			return;
 		}
+	}
 
-		if (!event || typeof event.type !== 'string' || !('data' in event)) {
-			console.warn('Ignoring invalid SSE event', event);
-			return;
-		}
-
+	private notify(event: AppEvent): void {
 		const handlers = this.handlers.get(event.type);
 		for (const handler of handlers ?? []) {
 			try {

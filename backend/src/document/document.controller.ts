@@ -7,7 +7,6 @@ import {
   HttpCode,
   Header,
   Param,
-  ParseUUIDPipe,
   Patch,
   Post,
   Req,
@@ -34,12 +33,21 @@ import type { AuthenticatedUser } from 'auth/interfaces/authenticated-user.inter
 import { createReadStream } from 'node:fs';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import 'multer';
-import { DocumentUploadDto, UpdateDocumentDto } from './dto/document.dto';
 import {
-  DocumentDto,
-  DocumentResponseDto,
-  DocumentSearchResultDto,
-} from './dto/document.response.dto';
+  documentSearchQuerySchema,
+  documentUploadRequestSchema,
+  idParamsSchema,
+  updateDocumentRequestSchema,
+  type DocumentResponse,
+  type DocumentSearchQuery,
+  type DocumentSearchResultResponse,
+  type DocumentSummaryResponse,
+  type DocumentUploadRequest as DocumentUploadMetadataRequest,
+  type DocumentUploadResponse,
+  type IdParams,
+  type UpdateDocumentRequest,
+} from '@arcivo/api-contracts';
+import { ZodValidationPipe } from 'common/pipes/zod-validation.pipe';
 import {
   DocumentUploadInterceptor,
   type DocumentUploadRequest,
@@ -82,7 +90,7 @@ export class DocumentController {
       },
     },
   })
-  @ApiResponse({ status: 200, type: DocumentResponseDto })
+  @ApiResponse({ status: 200, description: 'Upload result' })
   @ApiResponse({ status: 400, description: 'Missing file or invalid metadata' })
   @ApiResponse({ status: 415, description: 'Unsupported document type' })
   @UseInterceptors(
@@ -94,9 +102,10 @@ export class DocumentController {
   async uploadDocument(
     @CurrentUser() user: AuthenticatedUser,
     @UploadedFiles() files: { documentData?: Express.Multer.File[] },
-    @Body() dto: DocumentUploadDto,
+    @Body(new ZodValidationPipe(documentUploadRequestSchema))
+    dto: DocumentUploadMetadataRequest,
     @Req() req: DocumentUploadRequest,
-  ): Promise<DocumentResponseDto> {
+  ): Promise<DocumentUploadResponse> {
     const file = files.documentData?.[0];
 
     if (!file) throw new BadRequestException('No file uploaded');
@@ -109,8 +118,10 @@ export class DocumentController {
 
   @Get()
   @ApiOperation({ summary: 'List all documents' })
-  @ApiResponse({ status: 200, type: [DocumentDto] })
-  async getAll(@CurrentUser() user: AuthenticatedUser) {
+  @ApiResponse({ status: 200, description: 'Documents returned' })
+  async getAll(
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<DocumentSummaryResponse[]> {
     return await this.service.getAllDocuments(user.id);
   }
 
@@ -121,23 +132,25 @@ export class DocumentController {
     required: true,
     description: 'Filename or text search query',
   })
-  @ApiResponse({ status: 200, type: [DocumentSearchResultDto] })
-  async search(@CurrentUser() user: AuthenticatedUser, @Query('q') q: string) {
-    if (!q?.trim())
-      throw new BadRequestException('Query parameter "q" is required');
-    return await this.service.searchDocuments(user.id, q.trim());
+  @ApiResponse({ status: 200, description: 'Search results returned' })
+  async search(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query(new ZodValidationPipe(documentSearchQuerySchema))
+    query: DocumentSearchQuery,
+  ): Promise<DocumentSearchResultResponse[]> {
+    return await this.service.searchDocuments(user.id, query.q);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get a document by ID' })
   @ApiParam({ name: 'id', description: 'Document UUID' })
-  @ApiResponse({ status: 200, type: DocumentDto })
+  @ApiResponse({ status: 200, description: 'Document returned' })
   @ApiResponse({ status: 404, description: 'Document not found' })
   async getById(
     @CurrentUser() user: AuthenticatedUser,
-    @Param('id', new ParseUUIDPipe()) id: string,
-  ) {
-    return await this.service.getDocumentById(user.id, id);
+    @Param(new ZodValidationPipe(idParamsSchema)) params: IdParams,
+  ): Promise<DocumentResponse> {
+    return await this.service.getDocumentById(user.id, params.id);
   }
 
   @Get(':id/file')
@@ -145,9 +158,9 @@ export class DocumentController {
   @ApiParam({ name: 'id', description: 'Document UUID' })
   async getFile(
     @CurrentUser() user: AuthenticatedUser,
-    @Param('id', new ParseUUIDPipe()) id: string,
+    @Param(new ZodValidationPipe(idParamsSchema)) params: IdParams,
   ): Promise<StreamableFile> {
-    const documentFile = await this.service.getDocumentFile(user.id, id);
+    const documentFile = await this.service.getDocumentFile(user.id, params.id);
     const stream = createReadStream(documentFile.path);
 
     return new StreamableFile(stream, {
@@ -161,9 +174,12 @@ export class DocumentController {
   @ApiParam({ name: 'id', description: 'Document UUID' })
   async getArchive(
     @CurrentUser() user: AuthenticatedUser,
-    @Param('id', new ParseUUIDPipe()) id: string,
+    @Param(new ZodValidationPipe(idParamsSchema)) params: IdParams,
   ): Promise<StreamableFile> {
-    const archiveFile = await this.service.getDocumentArchive(user.id, id);
+    const archiveFile = await this.service.getDocumentArchive(
+      user.id,
+      params.id,
+    );
     const stream = createReadStream(archiveFile.path);
 
     return new StreamableFile(stream, {
@@ -178,11 +194,11 @@ export class DocumentController {
   @Header('Content-Type', 'image/webp')
   async getThumbnail(
     @CurrentUser() user: AuthenticatedUser,
-    @Param('id', new ParseUUIDPipe()) id: string,
+    @Param(new ZodValidationPipe(idParamsSchema)) params: IdParams,
   ): Promise<StreamableFile> {
     const thumbnailPath = await this.service.getDocumentThumbnailPath(
       user.id,
-      id,
+      params.id,
     );
     const stream = createReadStream(thumbnailPath);
     return new StreamableFile(stream);
@@ -195,20 +211,21 @@ export class DocumentController {
   @HttpCode(204)
   async deleteDocument(
     @CurrentUser() user: AuthenticatedUser,
-    @Param('id', new ParseUUIDPipe()) id: string,
-  ) {
-    return await this.service.deleteDocument(user.id, id);
+    @Param(new ZodValidationPipe(idParamsSchema)) params: IdParams,
+  ): Promise<void> {
+    return await this.service.deleteDocument(user.id, params.id);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update document metadata' })
   @ApiParam({ name: 'id', description: 'Document UUID' })
-  @ApiResponse({ status: 200, type: DocumentDto })
+  @ApiResponse({ status: 200, description: 'Document updated' })
   async updateDocument(
     @CurrentUser() user: AuthenticatedUser,
-    @Param('id', new ParseUUIDPipe()) id: string,
-    @Body() dto: UpdateDocumentDto,
-  ) {
-    return await this.service.updateDocument(user.id, id, dto);
+    @Param(new ZodValidationPipe(idParamsSchema)) params: IdParams,
+    @Body(new ZodValidationPipe(updateDocumentRequestSchema))
+    dto: UpdateDocumentRequest,
+  ): Promise<DocumentResponse> {
+    return await this.service.updateDocument(user.id, params.id, dto);
   }
 }

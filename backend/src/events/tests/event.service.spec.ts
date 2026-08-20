@@ -1,5 +1,5 @@
 import { EventService } from '../event.service';
-import { APP_EVENTS } from '../event.types';
+import { APP_EVENTS } from '@arcivo/api-contracts';
 
 describe(EventService.name, () => {
   it('only sends events to the document owner', () => {
@@ -14,16 +14,16 @@ describe(EventService.name, () => {
       .subscribe((event) => otherUserEvents.push(event.data));
 
     service.publish('owner-id', APP_EVENTS.DOCUMENT_THUMBNAIL_GENERATED, {
-      documentId: 'owner-document-id',
+      documentId: '11111111-1111-4111-8111-111111111111',
     });
     service.publish('third-user-id', APP_EVENTS.DOCUMENT_THUMBNAIL_GENERATED, {
-      documentId: 'third-user-document-id',
+      documentId: '22222222-2222-4222-8222-222222222222',
     });
 
     expect(ownerEvents).toEqual([
       expect.objectContaining({
         type: APP_EVENTS.DOCUMENT_THUMBNAIL_GENERATED,
-        data: { documentId: 'owner-document-id' },
+        data: { documentId: '11111111-1111-4111-8111-111111111111' },
       }),
     ]);
     expect(otherUserEvents).toEqual([]);
