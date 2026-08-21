@@ -10,45 +10,26 @@ services:
 
   database:
     container_name: arcivo_postgres
-    build:
-      context: ./postgres
-      args:
-        PG_MAJOR: "16"
-        PGVECTOR_TAG: "0.8.1"
-        VECTORCHORD_TAG: "0.5.3"
+    image: postgres:16
     environment:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_USER: arcivo
       POSTGRES_DB: arcivo
       POSTGRES_INITDB_ARGS: --data-checksums
-      DB_STORAGE_TYPE: "SSD"
     ports:
       - 5432:5432
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
-    restart: unless-stopped
-
-  backend:
-    container_name: arcivo_backend
-    build:
-      context: ./backend
-      target: dev
-    ports:
-      - 3000:3000
-    depends_on:
-      - database
-      - redis
-    environment:
-      - NODE_ENV=development
-      - DB_PASSWORD=${DB_PASSWORD}
-      - JWT_SECRET=${JWT_SECRET}
-    volumes:
-      - ./backend/src:/app/src
-      - ./data/library:/app/library
-      - ./data/temp:/app/temp
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U arcivo -d arcivo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
 
   gotenberg:
     image: gotenberg/gotenberg:8
+    ports:
+      - 3001:3000
     environment:
       - API_TIMEOUT=300s

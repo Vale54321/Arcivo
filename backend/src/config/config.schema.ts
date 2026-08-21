@@ -4,14 +4,14 @@ export const configValidationSchema = Joi.object({
   PORT: Joi.number().default(3000),
 
   // Gotenberg configuration
-  GOTENBERG_URL: Joi.string().uri().default('http://gotenberg:3000'),
+  GOTENBERG_URL: Joi.string().uri().default('http://localhost:3001'),
 
   // Redis configuration
-  REDIS_HOST: Joi.string().default('redis'),
+  REDIS_HOST: Joi.string().default('localhost'),
   REDIS_PORT: Joi.number().default(6379),
 
   // Database configuration
-  DB_HOST: Joi.string().default('database'),
+  DB_HOST: Joi.string().default('localhost'),
   DB_PORT: Joi.number().default(5432),
   DB_USERNAME: Joi.string().default('arcivo'),
   DB_PASSWORD: Joi.string().required(),

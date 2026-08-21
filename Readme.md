@@ -1,124 +1,172 @@
 # Arcivo
 
-Arcivo is a self-hosted document management system inspired by Immich that focuses on high-performance media handling. It utilizes a modern tech stack consisting of a NestJS backend, a SvelteKit frontend, and a PostgreSQL database optimized for vector-based searches.
+Arcivo is a self-hosted document management system inspired by Immich. It uses
+a NestJS backend, a SvelteKit frontend, PostgreSQL, Valkey, and Gotenberg.
 
-## Development Setup
+## Development setup (Linux or WSL)
 
-### 1. Create a `.env` file
+The backend runs directly in Node.js. Docker Compose only starts the supporting
+services.
 
-Create a `.env` file in the project root with the following variables:
+### Dependencies
+
+- Node.js 24 and npm
+- Docker Engine with the Docker Compose plugin, or Docker Desktop with WSL
+  integration enabled
+- Poppler command-line tools and data files
+
+On Debian, Ubuntu, or an Ubuntu WSL distribution, install the native backend
+packages with:
+
+```sh
+sudo apt update
+sudo apt install poppler-utils poppler-data
+```
+
+Install Node.js 24 using your preferred Node version manager or distribution,
+then verify the required tools:
+
+```sh
+node --version
+npm --version
+docker compose version
+pdftotext -v
+```
+
+Run all commands below inside the Linux/WSL environment. When using WSL,
+keeping the repository in the WSL filesystem gives file watching better
+performance than working under `/mnt/c`.
+
+### 1. Configure the environment
+
+Create a `.env` file in the project root:
 
 ```env
 DB_PASSWORD=<PASSWORD>
 JWT_SECRET=<generate-with-openssl-rand-base64-48>
 ```
 
-`JWT_SECRET` must be a unique, random value of at least 32 characters. Do not
-reuse the development value in a deployed environment.
+`JWT_SECRET` must be a unique random value with at least 32 characters. The
+backend loads this root `.env` file when started from the `backend` directory.
 
-The initial migration seeds an administrator for local setup:
+Development defaults connect to PostgreSQL and Valkey on `localhost` and to
+Gotenberg at `http://localhost:3001`. These can be overridden with `DB_HOST`,
+`DB_PORT`, `REDIS_HOST`, `REDIS_PORT`, and `GOTENBERG_URL` in `.env`.
 
-- Email: `admin@example.com`
-- Password: `changeme`
-
-Change this password before using the account outside a local development
-environment.
-
-### 2. Start the development stack
+### 2. Start the supporting services
 
 ```sh
 docker compose up -d
 ```
 
-If `backend/package.json` or `backend/package-lock.json` changes, rebuild the backend image so the updated npm modules are installed:
+This starts:
+
+| Service | Image | Host port |
+| --- | --- | --- |
+| PostgreSQL | `postgres:16` | `5432` |
+| Valkey | `valkey/valkey:9` | `6379` |
+| Gotenberg | `gotenberg/gotenberg:8` | `3001` |
+
+Check their status or logs with:
 
 ```sh
-docker compose build backend
-docker compose up -d backend
+docker compose ps
+docker compose logs -f
 ```
 
-To rebuild without using Docker's cached layers:
+### 3. Run the backend natively
 
 ```sh
-docker compose build --no-cache backend
-docker compose up -d backend
+cd backend
+npm ci
+npm run start:dev
 ```
 
-### View backend logs
+The API is available at `http://localhost:3000/api`, and nodemon restarts it
+when backend source files change. Database migrations run automatically during
+startup. Uploaded and generated files are written to `backend/library` and
+temporary uploads to `backend/temp`; both directories are ignored by Git.
 
-Follow the backend logs:
+The initial migration creates a development administrator:
+
+- Email: `admin@example.com`
+- Password: `changeme`
+
+Change this password before using the account outside local development.
+
+### 4. Run the frontend (optional)
+
+In another terminal:
 
 ```sh
-docker compose logs -f backend
+cd frontend
+cp .env.example .env
+npm ci
+npm run dev
 ```
 
-Use `Ctrl+C` to stop following the logs without stopping the container. To show only the most recent 100 lines, run:
+Stop the supporting containers with:
 
 ```sh
-docker compose logs --tail=100 backend
+docker compose down
 ```
 
-This starts the following services:
+## Production Compose example
 
-| Service           | Description           | Port                                     |
-| ----------------- | --------------------- | ---------------------------------------- |
-| `arcivo_postgres` | PostgreSQL database   | `5432`                                   |
-| `arcivo_redis`    | Valkey/Redis          | `6379`                                   |
-| `arcivo_backend`  | NestJS backend        | `3000`                                   |
-| `gotenberg`       | PDF conversion engine | internal only (`3000` in Docker network) |
-
-#### Backend container
-
-The backend service mounts `./backend/src` into the container and uses `nodemon` for automatic restarts on file changes.
-
-#### Gotenberg container
-
-Arcivo uses [Gotenberg](https://gotenberg.dev/) to convert office-like documents and regular PDFs to [PDF/A-2](https://en.wikipedia.org/wiki/PDF/A) during background processing.
-
-## Production Compose Example
+The production backend image is still built from `backend/Dockerfile`. Its
+runtime image contains Poppler and only production npm dependencies.
 
 ```yaml
 services:
-	backend:
-		container_name: arcivo_backend
-		image: git.heiserer.de/arcivo/arcivo/backend:latest
-		restart: always
-		environment:
-			NODE_ENV: production
-			PORT: 3000
-			DB_HOST: database
-			DB_PORT: 5432
-			DB_PASSWORD: ${DB_PASSWORD}
-			DB_USERNAME: arcivo
-			DB_DATABASE: arcivo
-			REDIS_HOST: redis
-			REDIS_PORT: 6379
-			GOTENBERG_URL: http://gotenberg:3000
-			JWT_SECRET: ${JWT_SECRET}
-		volumes:
-			- ./data/library:/app/library
-			- ./data/temp:/app/temp
+  backend:
+    container_name: arcivo_backend
+    image: git.heiserer.de/arcivo/arcivo/backend:latest
+    restart: always
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DB_HOST: database
+      DB_PORT: 5432
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_USERNAME: arcivo
+      DB_DATABASE: arcivo
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      GOTENBERG_URL: http://gotenberg:3000
+      JWT_SECRET: ${JWT_SECRET}
+    volumes:
+      - ./data/library:/app/library
+      - ./data/temp:/app/temp
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_started
 
-	redis:
-		container_name: arcivo_redis
-		image: valkey/valkey:9
-		healthcheck:
-			test: redis-cli ping || exit 1
-		restart: unless-stopped
+  redis:
+    container_name: arcivo_redis
+    image: valkey/valkey:9
+    healthcheck:
+      test: redis-cli ping || exit 1
+    restart: unless-stopped
 
-	database:
-		container_name: arcivo_postgres
-		image: git.heiserer.de/arcivo/arcivo/database:latest
-		environment:
-			POSTGRES_PASSWORD: ${DB_PASSWORD}
-			POSTGRES_USER: arcivo
-			POSTGRES_DB: arcivo
-			POSTGRES_INITDB_ARGS: --data-checksums
-			DB_STORAGE_TYPE: 'SSD'
-		volumes:
-			- ./data/postgres:/var/lib/postgresql/data
-		restart: unless-stopped
+  database:
+    container_name: arcivo_postgres
+    image: postgres:16
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_USER: arcivo
+      POSTGRES_DB: arcivo
+      POSTGRES_INITDB_ARGS: --data-checksums
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U arcivo -d arcivo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
-	gotenberg:
-		image: gotenberg/gotenberg:8
+  gotenberg:
+    image: gotenberg/gotenberg:8
 ```
