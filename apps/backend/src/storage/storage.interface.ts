@@ -29,11 +29,7 @@ export interface IStorageService {
   /**
    * Deletes a file from the specified storage bucket.
    */
-  deleteFromBucket(
-    documentId: string,
-    extension: string,
-    bucket: StorageBucket,
-  ): Promise<void>;
+  deleteFromBucket(documentId: string, extension: string, bucket: StorageBucket): Promise<void>;
 
   /**
    * Resolves the full storage path for a file in the specified bucket.

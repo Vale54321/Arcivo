@@ -119,9 +119,7 @@ export class DocumentController {
   @Get()
   @ApiOperation({ summary: 'List all documents' })
   @ApiResponse({ status: 200, description: 'Documents returned' })
-  async getAll(
-    @CurrentUser() user: AuthenticatedUser,
-  ): Promise<DocumentSummaryResponse[]> {
+  async getAll(@CurrentUser() user: AuthenticatedUser): Promise<DocumentSummaryResponse[]> {
     return await this.service.getAllDocuments(user.id);
   }
 
@@ -176,10 +174,7 @@ export class DocumentController {
     @CurrentUser() user: AuthenticatedUser,
     @Param(new ZodValidationPipe(idParamsSchema)) params: IdParams,
   ): Promise<StreamableFile> {
-    const archiveFile = await this.service.getDocumentArchive(
-      user.id,
-      params.id,
-    );
+    const archiveFile = await this.service.getDocumentArchive(user.id, params.id);
     const stream = createReadStream(archiveFile.path);
 
     return new StreamableFile(stream, {
@@ -196,10 +191,7 @@ export class DocumentController {
     @CurrentUser() user: AuthenticatedUser,
     @Param(new ZodValidationPipe(idParamsSchema)) params: IdParams,
   ): Promise<StreamableFile> {
-    const thumbnailPath = await this.service.getDocumentThumbnailPath(
-      user.id,
-      params.id,
-    );
+    const thumbnailPath = await this.service.getDocumentThumbnailPath(user.id, params.id);
     const stream = createReadStream(thumbnailPath);
     return new StreamableFile(stream);
   }

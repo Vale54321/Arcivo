@@ -13,8 +13,7 @@ export function ApiAdminOnly() {
 export function ApiAdminOrSelf() {
   return applyDecorators(
     ApiForbiddenResponse({
-      description:
-        'Administrator access or ownership of the user account is required',
+      description: 'Administrator access or ownership of the user account is required',
     }),
     UseGuards(AdminOrSelfGuard),
   );

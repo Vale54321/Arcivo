@@ -39,27 +39,16 @@ export class TextExtractionProcessor extends WorkerHost {
         quiet: true,
       };
 
-      const result = await this.poppler.pdfToText(
-        archiveFile,
-        undefined,
-        options,
-      );
-      const pages = result
-        .split('\x0c')
-        .filter((page) => page.trim().length > 0);
-      const fullText = pages
-        .map((page, i) => `[PAGE ${i + 1}]\n${page.trimEnd()}`)
-        .join('\n\n');
+      const result = await this.poppler.pdfToText(archiveFile, undefined, options);
+      const pages = result.split('\x0c').filter((page) => page.trim().length > 0);
+      const fullText = pages.map((page, i) => `[PAGE ${i + 1}]\n${page.trimEnd()}`).join('\n\n');
 
       await this.documentRepository.update(documentId, {
         textContent: fullText,
       });
-      this.logger.log(
-        `Text extracted for document ${documentId}: ${fullText.length} characters`,
-      );
+      this.logger.log(`Text extracted for document ${documentId}: ${fullText.length} characters`);
     } catch (error: unknown) {
-      const extractionError =
-        error instanceof Error ? error : new Error(String(error));
+      const extractionError = error instanceof Error ? error : new Error(String(error));
       this.logger.error(
         `Failed to extract text for document ${documentId}: ${extractionError.message}`,
         extractionError.stack,

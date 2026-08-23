@@ -2,9 +2,12 @@
   "name": "@arcivo/ui-components",
   "version": "0.1.0",
   "private": true,
+  "files": [
+    "dist"
+  ],
   "type": "module",
-  "svelte": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "svelte": "./dist/index.js",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -12,21 +15,18 @@
       "default": "./dist/index.js"
     }
   },
-  "files": [
-    "dist"
-  ],
   "scripts": {
     "build": "svelte-package -i src -o dist",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "test": "npm run check"
-  },
-  "peerDependencies": {
-    "svelte": "^5.0.0"
   },
   "devDependencies": {
     "@sveltejs/package": "^2.5.8",
     "svelte": "^5.51.0",
     "svelte-check": "^4.4.2",
     "typescript": "^5.9.3"
+  },
+  "peerDependencies": {
+    "svelte": "^5.0.0"
   }
 }

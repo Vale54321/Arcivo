@@ -39,24 +39,17 @@ export class DocumentUploadInterceptor implements NestInterceptor {
 
     const filename = decodeUploadFilename(rawFilename);
     if (!filename) {
-      throw new BadRequestException(
-        'x-arcivo-filename must be a URL-encoded UTF-8 file name',
-      );
+      throw new BadRequestException('x-arcivo-filename must be a URL-encoded UTF-8 file name');
     }
     req.arcivoFilename = filename;
 
     const mimeType = getMimeType(filename);
     if (!isSupportedMimeType(mimeType)) {
-      throw new UnsupportedMediaTypeException(
-        'Only documents (PDF, Office, Text) are allowed.',
-      );
+      throw new UnsupportedMediaTypeException('Only documents (PDF, Office, Text) are allowed.');
     }
 
     if (checksum) {
-      const duplicate = await this.service.getDocumentByChecksum(
-        req.user.id,
-        checksum,
-      );
+      const duplicate = await this.service.getDocumentByChecksum(req.user.id, checksum);
       if (duplicate) {
         const tempPath = req.files?.documentData?.[0]?.path || undefined;
         if (tempPath) await this.deleteTempFile(tempPath);

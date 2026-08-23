@@ -6,13 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DocumentRepository } from 'document/document.repository';
 import { PdfConversionJobData } from '../interfaces/job-data.interface';
-import {
-  LibreOffice,
-  HtmlConverter,
-  MarkdownConverter,
-  PDFEngines,
-  PdfFormat,
-} from 'chromiumly';
+import { LibreOffice, HtmlConverter, MarkdownConverter, PDFEngines, PdfFormat } from 'chromiumly';
 import { StorageBucket } from 'storage/storage.interface';
 import { StorageService } from 'storage/storage.service';
 import { JobService } from '../job.service';
@@ -70,30 +64,19 @@ export class GotenbergProcessor extends WorkerHost {
         this.jobService.addTextExtractionJob(documentId),
       ]);
     } catch (error: unknown) {
-      const jobError =
-        error instanceof Error ? error : new Error(String(error));
-      this.logger.error(
-        `Job ${job.id} failed: ${jobError.message}`,
-        jobError.stack,
-      );
+      const jobError = error instanceof Error ? error : new Error(String(error));
+      this.logger.error(`Job ${job.id} failed: ${jobError.message}`, jobError.stack);
       const isFinalAttempt = job.attemptsMade + 1 >= (job.opts.attempts ?? 1);
       if (isFinalAttempt && ownerId) {
-        this.eventService.publish(
-          ownerId,
-          APP_EVENTS.DOCUMENT_THUMBNAIL_FAILED,
-          {
-            documentId,
-          },
-        );
+        this.eventService.publish(ownerId, APP_EVENTS.DOCUMENT_THUMBNAIL_FAILED, {
+          documentId,
+        });
       }
       throw jobError;
     }
   }
 
-  private async convertToPdf(
-    originalPath: string,
-    mimeType: string,
-  ): Promise<Buffer> {
+  private async convertToPdf(originalPath: string, mimeType: string): Promise<Buffer> {
     if (isPdfMimeType(mimeType)) {
       return PDFEngines.convert({
         files: [originalPath],
@@ -110,9 +93,7 @@ export class GotenbergProcessor extends WorkerHost {
       });
     }
 
-    throw new UnsupportedMediaTypeException(
-      `Unsupported document MIME type: ${mimeType}`,
-    );
+    throw new UnsupportedMediaTypeException(`Unsupported document MIME type: ${mimeType}`);
   }
 
   private async convertMarkdownToPdf(originalPath: string): Promise<Buffer> {

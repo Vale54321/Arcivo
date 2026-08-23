@@ -1,10 +1,4 @@
-import {
-  Controller,
-  Header,
-  type MessageEvent,
-  Sse,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Header, type MessageEvent, Sse, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiExcludeEndpoint, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from 'auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';

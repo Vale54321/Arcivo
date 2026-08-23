@@ -15,9 +15,11 @@ export const serializedBufferSchema = z.object({
 });
 export type SerializedBuffer = z.infer<typeof serializedBufferSchema>;
 
-export const documentUploadRequestSchema = z.object({
-  fileCreatedAt: isoDateTimeSchema.optional(),
-}).strict();
+export const documentUploadRequestSchema = z
+  .object({
+    fileCreatedAt: isoDateTimeSchema.optional(),
+  })
+  .strict();
 export type DocumentUploadRequest = z.infer<typeof documentUploadRequestSchema>;
 
 export const updateDocumentRequestSchema = z
@@ -31,10 +33,7 @@ export const updateDocumentRequestSchema = z
     fileCreatedAt: isoDateTimeSchema.optional(),
   })
   .strict()
-  .refine(
-    (value) => Object.keys(value).length > 0,
-    'At least one document field is required',
-  );
+  .refine((value) => Object.keys(value).length > 0, 'At least one document field is required');
 export type UpdateDocumentRequest = z.infer<typeof updateDocumentRequestSchema>;
 
 export const documentSummaryResponseSchema = z.object({
@@ -59,24 +58,20 @@ export type DocumentResponse = z.infer<typeof documentResponseSchema>;
 export const documentsResponseSchema = z.array(documentSummaryResponseSchema);
 export type DocumentsResponse = z.infer<typeof documentsResponseSchema>;
 
-export const documentSearchQuerySchema = z.object({
-  q: z.string().trim().min(1, 'Query parameter "q" is required'),
-}).strict();
+export const documentSearchQuerySchema = z
+  .object({
+    q: z.string().trim().min(1, 'Query parameter "q" is required'),
+  })
+  .strict();
 export type DocumentSearchQuery = z.infer<typeof documentSearchQuerySchema>;
 
 export const documentSearchResultResponseSchema = documentSummaryResponseSchema.extend({
   matchType: documentMatchTypeSchema,
 });
-export type DocumentSearchResultResponse = z.infer<
-  typeof documentSearchResultResponseSchema
->;
+export type DocumentSearchResultResponse = z.infer<typeof documentSearchResultResponseSchema>;
 
-export const documentSearchResultsResponseSchema = z.array(
-  documentSearchResultResponseSchema,
-);
-export type DocumentSearchResultsResponse = z.infer<
-  typeof documentSearchResultsResponseSchema
->;
+export const documentSearchResultsResponseSchema = z.array(documentSearchResultResponseSchema);
+export type DocumentSearchResultsResponse = z.infer<typeof documentSearchResultsResponseSchema>;
 
 export const documentUploadResponseSchema = z.object({
   status: documentUploadStatusSchema,

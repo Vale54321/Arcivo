@@ -1,11 +1,13 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 export const uuidSchema = z.uuid();
 export const isoDateTimeSchema = z.iso.datetime({ offset: true });
 
-export const idParamsSchema = z.object({
-  id: uuidSchema,
-}).strict();
+export const idParamsSchema = z
+  .object({
+    id: uuidSchema,
+  })
+  .strict();
 export type IdParams = z.infer<typeof idParamsSchema>;
 
 export const apiErrorResponseSchema = z.object({

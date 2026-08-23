@@ -20,21 +20,13 @@ import { JwtStrategy } from './strategies/jwt.strategy';
         secret: configService.getOrThrow<string>('JWT_SECRET'),
         signOptions: {
           algorithm: 'HS256',
-          expiresIn: configService.getOrThrow<JwtSignOptions['expiresIn']>(
-            'JWT_ACCESS_TOKEN_TTL',
-          ),
+          expiresIn: configService.getOrThrow<JwtSignOptions['expiresIn']>('JWT_ACCESS_TOKEN_TTL'),
         },
       }),
     }),
   ],
   controllers: [AuthController],
-  providers: [
-    AuthService,
-    JwtStrategy,
-    JwtAuthGuard,
-    AdminGuard,
-    AdminOrSelfGuard,
-  ],
+  providers: [AuthService, JwtStrategy, JwtAuthGuard, AdminGuard, AdminOrSelfGuard],
   exports: [AuthService, JwtAuthGuard, AdminGuard, AdminOrSelfGuard],
 })
 export class AuthModule {}

@@ -27,14 +27,10 @@ export const getMimeType = (filename: string): string => {
   return mime.getType(filename) ?? 'application/octet-stream';
 };
 
-export const isOfficeMimeType = (mimeType: string): boolean =>
-  MIME_TYPES.office.includes(mimeType);
-export const isPdfMimeType = (mimeType: string): boolean =>
-  MIME_TYPES.pdf.includes(mimeType);
-export const isWebMimeType = (mimeType: string): boolean =>
-  MIME_TYPES.web.includes(mimeType);
-export const isTextMimeType = (mimeType: string): boolean =>
-  MIME_TYPES.text.includes(mimeType);
+export const isOfficeMimeType = (mimeType: string): boolean => MIME_TYPES.office.includes(mimeType);
+export const isPdfMimeType = (mimeType: string): boolean => MIME_TYPES.pdf.includes(mimeType);
+export const isWebMimeType = (mimeType: string): boolean => MIME_TYPES.web.includes(mimeType);
+export const isTextMimeType = (mimeType: string): boolean => MIME_TYPES.text.includes(mimeType);
 
 export const isSupportedMimeType = (mimeType: string): boolean =>
   ALL_SUPPORTED_TYPES.includes(mimeType);

@@ -26,7 +26,5 @@ export const configValidationSchema = Joi.object({
 
   // Keep uploaded files outside the application directory so app relocations
   // and rebuilds do not make existing documents unavailable.
-  STORAGE_ROOT: Joi.string().default(
-    resolve(__dirname, '../../../../data/library'),
-  ),
+  STORAGE_ROOT: Joi.string().default(resolve(__dirname, '../../../../data/library')),
 });

@@ -21,10 +21,7 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
-import {
-  ApiAdminOrSelf,
-  ApiAdminOnly,
-} from 'auth/decorators/api-access.decorator';
+import { ApiAdminOrSelf, ApiAdminOnly } from 'auth/decorators/api-access.decorator';
 import { CurrentUser } from 'auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
 import type { AuthenticatedUser } from 'auth/interfaces/authenticated-user.interface';
@@ -79,17 +76,14 @@ export class UserController {
   @Get('me')
   @ApiOperation({ summary: 'Get the current user' })
   @ApiOkResponse({ description: 'Current user returned' })
-  async findCurrentUser(
-    @CurrentUser() user: AuthenticatedUser,
-  ): Promise<UserResponse> {
+  async findCurrentUser(@CurrentUser() user: AuthenticatedUser): Promise<UserResponse> {
     return await this.userService.findById(user.id);
   }
 
   @Get(':id')
   @ApiOperation({
     summary: 'Get a user by ID',
-    description:
-      'Requires an administrator account or the requested user account.',
+    description: 'Requires an administrator account or the requested user account.',
   })
   @ApiAdminOrSelf()
   @ApiParam({ name: 'id', description: 'User UUID' })
@@ -140,9 +134,7 @@ export class UserController {
     dto: UpdateUserRequest,
   ): Promise<UserResponse> {
     if (!currentUser.isAdmin && dto.isAdmin !== undefined) {
-      throw new ForbiddenException(
-        'Only administrators can change admin status',
-      );
+      throw new ForbiddenException('Only administrators can change admin status');
     }
     return await this.userService.update(params.id, dto);
   }

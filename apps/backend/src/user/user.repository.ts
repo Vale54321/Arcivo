@@ -9,10 +9,7 @@ import {
 } from 'database/database.types';
 
 type CreateUserData = Pick<NewUser, 'email' | 'displayName' | 'passwordHash'>;
-export type UpdateUserData = Pick<
-  UserUpdate,
-  'email' | 'displayName' | 'isAdmin' | 'updatedAt'
->;
+export type UpdateUserData = Pick<UserUpdate, 'email' | 'displayName' | 'isAdmin' | 'updatedAt'>;
 
 const ADMIN_ROLE_LOCK_KEY = 'arcivo:users:admin-role';
 
@@ -24,28 +21,14 @@ export class UserRepository {
     return await this.db
       .insertInto('users')
       .values(data)
-      .returning([
-        'id',
-        'email',
-        'displayName',
-        'isAdmin',
-        'createdAt',
-        'updatedAt',
-      ])
+      .returning(['id', 'email', 'displayName', 'isAdmin', 'createdAt', 'updatedAt'])
       .executeTakeFirstOrThrow();
   }
 
   async findAll(): Promise<UserEntity[]> {
     return await this.db
       .selectFrom('users')
-      .select([
-        'id',
-        'email',
-        'displayName',
-        'isAdmin',
-        'createdAt',
-        'updatedAt',
-      ])
+      .select(['id', 'email', 'displayName', 'isAdmin', 'createdAt', 'updatedAt'])
       .orderBy('createdAt', 'asc')
       .execute();
   }
@@ -53,14 +36,7 @@ export class UserRepository {
   async findById(id: string): Promise<UserEntity | undefined> {
     return await this.db
       .selectFrom('users')
-      .select([
-        'id',
-        'email',
-        'displayName',
-        'isAdmin',
-        'createdAt',
-        'updatedAt',
-      ])
+      .select(['id', 'email', 'displayName', 'isAdmin', 'createdAt', 'updatedAt'])
       .where('id', '=', id)
       .executeTakeFirst();
   }
@@ -68,21 +44,12 @@ export class UserRepository {
   async findByEmail(email: string): Promise<UserEntity | undefined> {
     return await this.db
       .selectFrom('users')
-      .select([
-        'id',
-        'email',
-        'displayName',
-        'isAdmin',
-        'createdAt',
-        'updatedAt',
-      ])
+      .select(['id', 'email', 'displayName', 'isAdmin', 'createdAt', 'updatedAt'])
       .where(sql<string>`lower("email")`, '=', email.trim().toLowerCase())
       .executeTakeFirst();
   }
 
-  async findByEmailForAuthentication(
-    email: string,
-  ): Promise<UserCredentialsEntity | undefined> {
+  async findByEmailForAuthentication(email: string): Promise<UserCredentialsEntity | undefined> {
     return await this.db
       .selectFrom('users')
       .select(['id', 'email', 'displayName', 'isAdmin', 'passwordHash'])
@@ -90,10 +57,7 @@ export class UserRepository {
       .executeTakeFirst();
   }
 
-  async update(
-    id: string,
-    data: UpdateUserData,
-  ): Promise<UserEntity | undefined> {
+  async update(id: string, data: UpdateUserData): Promise<UserEntity | undefined> {
     if (data.isAdmin === undefined) {
       return await this.updateWithDatabase(this.db, id, data);
     }
@@ -107,22 +71,12 @@ export class UserRepository {
     });
   }
 
-  async updatePasswordHash(
-    id: string,
-    passwordHash: string,
-  ): Promise<UserEntity | undefined> {
+  async updatePasswordHash(id: string, passwordHash: string): Promise<UserEntity | undefined> {
     return await this.db
       .updateTable('users')
       .set({ passwordHash, updatedAt: new Date() })
       .where('id', '=', id)
-      .returning([
-        'id',
-        'email',
-        'displayName',
-        'isAdmin',
-        'createdAt',
-        'updatedAt',
-      ])
+      .returning(['id', 'email', 'displayName', 'isAdmin', 'createdAt', 'updatedAt'])
       .executeTakeFirst();
   }
 
@@ -135,14 +89,7 @@ export class UserRepository {
       .updateTable('users')
       .set(data)
       .where('id', '=', id)
-      .returning([
-        'id',
-        'email',
-        'displayName',
-        'isAdmin',
-        'createdAt',
-        'updatedAt',
-      ])
+      .returning(['id', 'email', 'displayName', 'isAdmin', 'createdAt', 'updatedAt'])
       .executeTakeFirst();
   }
 }

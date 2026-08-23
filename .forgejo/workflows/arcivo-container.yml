@@ -3,20 +3,20 @@ name: Build and publish Arcivo container
 on:
   push:
     branches:
-      - "**"
+      - '**'
     tags:
-      - "v*"
+      - 'v*'
     paths:
-      - "apps/backend/**"
-      - "apps/frontend/**"
-      - "libs/api-contracts/**"
-      - "libs/ui-components/**"
-      - "package.json"
-      - "package-lock.json"
-      - "tsconfig.base.json"
-      - "nx.json"
-      - ".dockerignore"
-      - ".forgejo/workflows/arcivo-container.yml"
+      - 'apps/backend/**'
+      - 'apps/frontend/**'
+      - 'libs/api-contracts/**'
+      - 'libs/ui-components/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.base.json'
+      - 'nx.json'
+      - '.dockerignore'
+      - '.forgejo/workflows/arcivo-container.yml'
   workflow_dispatch:
 
 env:

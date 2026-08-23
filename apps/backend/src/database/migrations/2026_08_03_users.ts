@@ -7,21 +7,13 @@ const DEFAULT_ADMIN_PASSWORD = 'changeme';
 export async function up(db: Kysely<Database>): Promise<void> {
   await db.schema
     .createTable('users')
-    .addColumn('id', 'uuid', (col) =>
-      col.primaryKey().defaultTo(sql`gen_random_uuid()`),
-    )
+    .addColumn('id', 'uuid', (col) => col.primaryKey().defaultTo(sql`gen_random_uuid()`))
     .addColumn('email', 'varchar(320)', (col) => col.notNull())
     .addColumn('displayName', 'varchar(100)', (col) => col.notNull())
-    .addColumn('isAdmin', 'boolean', (col) =>
-      col.notNull().defaultTo(sql`false`),
-    )
+    .addColumn('isAdmin', 'boolean', (col) => col.notNull().defaultTo(sql`false`))
     .addColumn('passwordHash', 'text', (col) => col.notNull())
-    .addColumn('createdAt', 'timestamptz', (col) =>
-      col.notNull().defaultTo(sql`now()`),
-    )
-    .addColumn('updatedAt', 'timestamptz', (col) =>
-      col.notNull().defaultTo(sql`now()`),
-    )
+    .addColumn('createdAt', 'timestamptz', (col) => col.notNull().defaultTo(sql`now()`))
+    .addColumn('updatedAt', 'timestamptz', (col) => col.notNull().defaultTo(sql`now()`))
     .execute();
 
   await db.schema
@@ -109,12 +101,8 @@ export async function up(db: Kysely<Database>): Promise<void> {
 
   await db.schema
     .alterTable('documents')
-    .addForeignKeyConstraint(
-      'documents_owner_id_fk',
-      ['ownerId'],
-      'users',
-      ['id'],
-      (constraint) => constraint.onDelete('restrict'),
+    .addForeignKeyConstraint('documents_owner_id_fk', ['ownerId'], 'users', ['id'], (constraint) =>
+      constraint.onDelete('restrict'),
     )
     .execute();
 }
@@ -124,9 +112,6 @@ export async function down(db: Kysely<Database>): Promise<void> {
     DROP TRIGGER IF EXISTS users_prevent_last_admin_removal ON users
   `.execute(db);
   await sql`DROP FUNCTION IF EXISTS prevent_last_admin_removal()`.execute(db);
-  await db.schema
-    .alterTable('documents')
-    .dropConstraint('documents_owner_id_fk')
-    .execute();
+  await db.schema.alterTable('documents').dropConstraint('documents_owner_id_fk').execute();
   await db.schema.dropTable('users').execute();
 }

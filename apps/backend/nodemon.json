@@ -1,13 +1,7 @@
 {
-  "watch": [
-    "src",
-    "../../libs/api-contracts/src",
-    "../../libs/ui-components/src"
-  ],
+  "watch": ["src", "../../libs/api-contracts/src", "../../libs/ui-components/src"],
   "ext": "ts,json",
-  "ignore": [
-    "src/**/*.spec.ts"
-  ],
+  "ignore": ["src/**/*.spec.ts"],
   "exec": "ts-node -r tsconfig-paths/register src/main.ts",
   "delay": 1000,
   "signal": "SIGTERM",

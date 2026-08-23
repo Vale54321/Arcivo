@@ -14,26 +14,16 @@ describe(AdminOrSelfGuard.name, () => {
   }
 
   it('allows administrators to access every user account', () => {
-    expect(
-      guard.canActivate(
-        contextFor({ id: 'admin-id', isAdmin: true }, 'user-id'),
-      ),
-    ).toBe(true);
+    expect(guard.canActivate(contextFor({ id: 'admin-id', isAdmin: true }, 'user-id'))).toBe(true);
   });
 
   it('allows users to access their own account', () => {
-    expect(
-      guard.canActivate(
-        contextFor({ id: 'user-id', isAdmin: false }, 'user-id'),
-      ),
-    ).toBe(true);
+    expect(guard.canActivate(contextFor({ id: 'user-id', isAdmin: false }, 'user-id'))).toBe(true);
   });
 
   it('rejects users accessing another account', () => {
     expect(() =>
-      guard.canActivate(
-        contextFor({ id: 'user-id', isAdmin: false }, 'another-user-id'),
-      ),
+      guard.canActivate(contextFor({ id: 'user-id', isAdmin: false }, 'another-user-id')),
     ).toThrow(ForbiddenException);
   });
 });

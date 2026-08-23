@@ -9,11 +9,13 @@ const displayNameSchema = z
   .refine((value) => /\S/.test(value), 'displayName must contain a non-space character');
 const passwordSchema = z.string().min(8).max(128);
 
-export const createUserRequestSchema = z.object({
-  email: emailSchema,
-  displayName: displayNameSchema,
-  password: passwordSchema,
-}).strict();
+export const createUserRequestSchema = z
+  .object({
+    email: emailSchema,
+    displayName: displayNameSchema,
+    password: passwordSchema,
+  })
+  .strict();
 export type CreateUserRequest = z.infer<typeof createUserRequestSchema>;
 
 export const updateUserRequestSchema = z
@@ -26,9 +28,11 @@ export const updateUserRequestSchema = z
   .refine((value) => Object.keys(value).length > 0, 'At least one field must be provided');
 export type UpdateUserRequest = z.infer<typeof updateUserRequestSchema>;
 
-export const resetUserPasswordRequestSchema = z.object({
-  password: passwordSchema,
-}).strict();
+export const resetUserPasswordRequestSchema = z
+  .object({
+    password: passwordSchema,
+  })
+  .strict();
 export type ResetUserPasswordRequest = z.infer<typeof resetUserPasswordRequestSchema>;
 
 export const userResponseSchema = z.object({

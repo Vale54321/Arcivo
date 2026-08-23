@@ -63,43 +63,28 @@ export class ThumbnailProcessor extends WorkerHost {
 
       await this.poppler.pdfToPpm(sourceFile, pngThumbnail, options);
 
-      await sharp(`${pngThumbnail}.png`)
-        .webp({ quality: 80 })
-        .toFile(webpThumbnail);
+      await sharp(`${pngThumbnail}.png`).webp({ quality: 80 }).toFile(webpThumbnail);
 
       await this.documentRepository.update(documentId, { hasThumbnail: true });
-      this.eventService.publish(
-        ownerId,
-        APP_EVENTS.DOCUMENT_THUMBNAIL_GENERATED,
-        {
-          documentId,
-        },
-      );
+      this.eventService.publish(ownerId, APP_EVENTS.DOCUMENT_THUMBNAIL_GENERATED, {
+        documentId,
+      });
       this.logger.log(`Thumbnail generated: ${webpThumbnail}`);
     } catch (error: unknown) {
-      const thumbnailError =
-        error instanceof Error ? error : new Error(String(error));
+      const thumbnailError = error instanceof Error ? error : new Error(String(error));
       this.logger.error(
         `Failed to generate thumbnail for document ${documentId}: ${thumbnailError.message}`,
         thumbnailError.stack,
       );
       const isFinalAttempt = job.attemptsMade + 1 >= (job.opts.attempts ?? 1);
       if (isFinalAttempt && ownerId) {
-        this.eventService.publish(
-          ownerId,
-          APP_EVENTS.DOCUMENT_THUMBNAIL_FAILED,
-          {
-            documentId,
-          },
-        );
+        this.eventService.publish(ownerId, APP_EVENTS.DOCUMENT_THUMBNAIL_FAILED, {
+          documentId,
+        });
       }
       throw thumbnailError;
     } finally {
-      await this.storageService.deleteFromBucket(
-        documentId,
-        '.png',
-        StorageBucket.THUMBS,
-      );
+      await this.storageService.deleteFromBucket(documentId, '.png', StorageBucket.THUMBS);
     }
   }
 }

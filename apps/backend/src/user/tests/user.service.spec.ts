@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  ConflictException,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { DatabaseError } from 'pg';
 import { UserEntity } from 'database/database.types';
 import { LoggingService } from 'logging/logging.service';
@@ -18,9 +14,7 @@ describe(UserService.name, () => {
   let createMock: jest.MockedFunction<UserRepository['create']>;
   let findByIdMock: jest.MockedFunction<UserRepository['findById']>;
   let updateMock: jest.MockedFunction<UserRepository['update']>;
-  let updatePasswordHashMock: jest.MockedFunction<
-    UserRepository['updatePasswordHash']
-  >;
+  let updatePasswordHashMock: jest.MockedFunction<UserRepository['updatePasswordHash']>;
   let hashMock: jest.MockedFunction<PasswordService['hash']>;
 
   const user: UserEntity = {
@@ -57,11 +51,7 @@ describe(UserService.name, () => {
       verbose: jest.fn(),
     } as unknown as LoggingService;
 
-    service = new UserService(
-      repository,
-      { hash: hashMock, verify: jest.fn() },
-      loggingService,
-    );
+    service = new UserService(repository, { hash: hashMock, verify: jest.fn() }, loggingService);
   });
 
   it('normalizes user data before creating the record', async () => {
@@ -114,9 +104,7 @@ describe(UserService.name, () => {
   it('returns not found when the user does not exist', async () => {
     findByIdMock.mockResolvedValue(undefined);
 
-    await expect(service.findById(user.id)).rejects.toBeInstanceOf(
-      NotFoundException,
-    );
+    await expect(service.findById(user.id)).rejects.toBeInstanceOf(NotFoundException);
   });
 
   it('hashes a password before resetting it', async () => {
@@ -126,16 +114,11 @@ describe(UserService.name, () => {
       service.resetPassword(user.id, { password: 'new secure password' }),
     ).resolves.toBeUndefined();
 
-    expect(updatePasswordHashMock).toHaveBeenCalledWith(
-      user.id,
-      'argon2id-password-hash',
-    );
+    expect(updatePasswordHashMock).toHaveBeenCalledWith(user.id, 'argon2id-password-hash');
   });
 
   it('rejects an empty update', async () => {
-    await expect(service.update(user.id, {})).rejects.toBeInstanceOf(
-      BadRequestException,
-    );
+    await expect(service.update(user.id, {})).rejects.toBeInstanceOf(BadRequestException);
     expect(updateMock).not.toHaveBeenCalled();
   });
 
@@ -145,9 +128,9 @@ describe(UserService.name, () => {
       email: 'new@example.com',
     });
 
-    await expect(
-      service.update(user.id, { email: ' New@Example.com ' }),
-    ).resolves.toMatchObject({ email: 'new@example.com' });
+    await expect(service.update(user.id, { email: ' New@Example.com ' })).resolves.toMatchObject({
+      email: 'new@example.com',
+    });
 
     expect(updateMock).toHaveBeenCalledTimes(1);
     const [updatedUserId, update] = updateMock.mock.calls[0];

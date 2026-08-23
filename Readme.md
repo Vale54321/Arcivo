@@ -61,11 +61,11 @@ docker compose up -d
 
 This starts:
 
-| Service | Image | Host port |
-| --- | --- | --- |
-| PostgreSQL | `postgres:16` | `5432` |
-| Valkey | `valkey/valkey:9` | `6379` |
-| Gotenberg | `gotenberg/gotenberg:8` | `3001` |
+| Service    | Image                   | Host port |
+| ---------- | ----------------------- | --------- |
+| PostgreSQL | `postgres:16`           | `5432`    |
+| Valkey     | `valkey/valkey:9`       | `6379`    |
+| Gotenberg  | `gotenberg/gotenberg:8` | `3001`    |
 
 Check their status or logs with:
 
@@ -161,7 +161,7 @@ services:
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U arcivo -d arcivo"]
+      test: ['CMD-SHELL', 'pg_isready -U arcivo -d arcivo']
       interval: 10s
       timeout: 5s
       retries: 5

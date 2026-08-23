@@ -65,10 +65,7 @@ describe(AuthService.name, () => {
       }),
     ).resolves.toEqual({ accessToken: 'signed.jwt.token' });
 
-    expect(verify).toHaveBeenCalledWith(
-      credentials.passwordHash,
-      'correct horse battery staple',
-    );
+    expect(verify).toHaveBeenCalledWith(credentials.passwordHash, 'correct horse battery staple');
   });
 
   it('rejects unknown users after a dummy password verification', async () => {

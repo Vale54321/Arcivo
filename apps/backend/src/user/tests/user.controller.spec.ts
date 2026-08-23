@@ -1,8 +1,4 @@
-import {
-  ExecutionContext,
-  INestApplication,
-  VersioningType,
-} from '@nestjs/common';
+import { ExecutionContext, INestApplication, VersioningType } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { Server } from 'node:http';
 import request from 'supertest';
@@ -18,10 +14,7 @@ jest.mock('kysely', () => ({ Kysely: class Kysely {} }));
 describe(UserController.name, () => {
   let app: INestApplication<Server>;
   let userService: jest.Mocked<
-    Pick<
-      UserService,
-      'create' | 'findAll' | 'findById' | 'resetPassword' | 'update'
-    >
+    Pick<UserService, 'create' | 'findAll' | 'findById' | 'resetPassword' | 'update'>
   >;
   let currentUser: AuthenticatedUser;
 
@@ -111,9 +104,7 @@ describe(UserController.name, () => {
   });
 
   it('rejects malformed UUID route parameters', async () => {
-    await request(app.getHttpServer())
-      .get('/api/v1/users/not-a-uuid')
-      .expect(400);
+    await request(app.getHttpServer()).get('/api/v1/users/not-a-uuid').expect(400);
 
     expect(userService.findById).not.toHaveBeenCalled();
   });
@@ -122,10 +113,7 @@ describe(UserController.name, () => {
     currentUser.isAdmin = false;
     userService.findById.mockResolvedValue(user);
 
-    await request(app.getHttpServer())
-      .get('/api/v1/users/me')
-      .expect(200)
-      .expect(user);
+    await request(app.getHttpServer()).get('/api/v1/users/me').expect(200).expect(user);
 
     expect(userService.findById).toHaveBeenCalledWith(user.id);
   });
@@ -155,9 +143,7 @@ describe(UserController.name, () => {
       displayName: 'Updated Ada',
     });
 
-    await request(app.getHttpServer())
-      .get(`/api/v1/users/${user.id}`)
-      .expect(200);
+    await request(app.getHttpServer()).get(`/api/v1/users/${user.id}`).expect(200);
     await request(app.getHttpServer())
       .patch(`/api/v1/users/${user.id}`)
       .send({ displayName: 'Updated Ada' })

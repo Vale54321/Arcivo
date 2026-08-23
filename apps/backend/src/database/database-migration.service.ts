@@ -31,9 +31,7 @@ export class DatabaseMigrationService implements OnModuleInit {
 
     for (const result of results ?? []) {
       if (result.status === 'Success') {
-        this.logger.log(
-          `Migration "${result.migrationName}" applied successfully`,
-        );
+        this.logger.log(`Migration "${result.migrationName}" applied successfully`);
       } else if (result.status === 'Error') {
         this.logger.error(`Migration "${result.migrationName}" failed`);
       }
@@ -41,9 +39,7 @@ export class DatabaseMigrationService implements OnModuleInit {
 
     if (error) {
       const migrationError =
-        error instanceof Error
-          ? error
-          : new Error('Database migration failed', { cause: error });
+        error instanceof Error ? error : new Error('Database migration failed', { cause: error });
       this.logger.error(migrationError, migrationError.stack);
       throw migrationError;
     }

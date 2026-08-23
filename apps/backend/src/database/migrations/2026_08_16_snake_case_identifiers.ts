@@ -18,9 +18,7 @@ const userColumns = [
 ] as const;
 
 export async function up(db: Kysely<any>): Promise<void> {
-  await sql`DROP TRIGGER IF EXISTS users_prevent_last_admin_removal ON users`.execute(
-    db,
-  );
+  await sql`DROP TRIGGER IF EXISTS users_prevent_last_admin_removal ON users`.execute(db);
   await sql`DROP FUNCTION IF EXISTS prevent_last_admin_removal()`.execute(db);
 
   for (const [from, to] of documentColumns) {
@@ -34,9 +32,7 @@ export async function up(db: Kysely<any>): Promise<void> {
 }
 
 export async function down(db: Kysely<any>): Promise<void> {
-  await sql`DROP TRIGGER IF EXISTS users_prevent_last_admin_removal ON users`.execute(
-    db,
-  );
+  await sql`DROP TRIGGER IF EXISTS users_prevent_last_admin_removal ON users`.execute(db);
   await sql`DROP FUNCTION IF EXISTS prevent_last_admin_removal()`.execute(db);
 
   for (const [from, to] of [...documentColumns].reverse()) {

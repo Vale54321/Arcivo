@@ -48,9 +48,7 @@ export class UserService extends BaseService {
   }
 
   async findAll(): Promise<UserResponse[]> {
-    return (await this.userRepository.findAll()).map((user) =>
-      this.toResponse(user),
-    );
+    return (await this.userRepository.findAll()).map((user) => this.toResponse(user));
   }
 
   async findById(id: string): Promise<UserResponse> {
@@ -59,12 +57,8 @@ export class UserService extends BaseService {
     return this.toResponse(user);
   }
 
-  async findByEmailForAuthentication(
-    email: string,
-  ): Promise<UserCredentialsEntity | undefined> {
-    return await this.userRepository.findByEmailForAuthentication(
-      this.normalizeEmail(email),
-    );
+  async findByEmailForAuthentication(email: string): Promise<UserCredentialsEntity | undefined> {
+    return await this.userRepository.findByEmailForAuthentication(this.normalizeEmail(email));
   }
 
   async update(id: string, dto: UpdateUserRequest): Promise<UserResponse> {
@@ -88,10 +82,7 @@ export class UserService extends BaseService {
     }
   }
 
-  async resetPassword(
-    id: string,
-    dto: ResetUserPasswordRequest,
-  ): Promise<void> {
+  async resetPassword(id: string, dto: ResetUserPasswordRequest): Promise<void> {
     const user = await this.userRepository.updatePasswordHash(
       id,
       await this.passwordService.hash(dto.password),

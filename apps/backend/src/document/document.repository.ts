@@ -1,11 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Kysely } from 'kysely';
-import {
-  Database,
-  DocumentEntity,
-  NewDocument,
-  DocumentUpdate,
-} from 'database/database.types';
+import { Database, DocumentEntity, NewDocument, DocumentUpdate } from 'database/database.types';
 
 export type CreateDocumentDto = Omit<NewDocument, 'checksum'> & {
   checksum: string;
@@ -61,15 +56,7 @@ export class DocumentRepository {
   async findAll(ownerId: string) {
     return await this.db
       .selectFrom('documents')
-      .select([
-        'id',
-        'name',
-        'size',
-        'mimeType',
-        'fileCreatedAt',
-        'createdAt',
-        'hasThumbnail',
-      ])
+      .select(['id', 'name', 'size', 'mimeType', 'fileCreatedAt', 'createdAt', 'hasThumbnail'])
       .where('ownerId', '=', ownerId)
       .orderBy('fileCreatedAt', 'desc')
       .execute();
@@ -108,9 +95,7 @@ export class DocumentRepository {
         'hasThumbnail',
         'textContent',
       ])
-      .where((eb) =>
-        eb.or([eb('name', 'ilike', term), eb('textContent', 'ilike', term)]),
-      )
+      .where((eb) => eb.or([eb('name', 'ilike', term), eb('textContent', 'ilike', term)]))
       .where('ownerId', '=', ownerId)
       .orderBy('fileCreatedAt', 'desc')
       .execute();

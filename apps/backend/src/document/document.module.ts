@@ -14,13 +14,7 @@ import { DocumentUploadInterceptor } from './interceptors/document-upload.interc
 import { FileHashService } from './services/file-hash.service';
 
 @Module({
-  imports: [
-    DatabaseModule,
-    StorageModule,
-    EventModule,
-    JobModule,
-    LoggingModule,
-  ],
+  imports: [DatabaseModule, StorageModule, EventModule, JobModule, LoggingModule],
   controllers: [DocumentController],
   providers: [
     DocumentService,

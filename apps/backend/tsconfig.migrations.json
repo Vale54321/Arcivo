@@ -6,8 +6,5 @@
     "incremental": false,
     "sourceMap": false
   },
-  "include": [
-    "src/database/database.types.ts",
-    "src/database/migrations/**/*.ts"
-  ]
+  "include": ["src/database/database.types.ts", "src/database/migrations/**/*.ts"]
 }

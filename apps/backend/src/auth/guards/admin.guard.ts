@@ -10,9 +10,7 @@ import type { AuthenticatedUser } from '../interfaces/authenticated-user.interfa
 @Injectable()
 export class AdminGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
-    const request = context
-      .switchToHttp()
-      .getRequest<Request & { user?: AuthenticatedUser }>();
+    const request = context.switchToHttp().getRequest<Request & { user?: AuthenticatedUser }>();
 
     if (!request.user?.isAdmin) {
       throw new ForbiddenException('Administrator access is required');

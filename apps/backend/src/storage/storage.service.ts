@@ -10,9 +10,7 @@ export class StorageService implements IStorageService {
   private readonly libraryRoot: string;
 
   constructor(private readonly configService: ConfigService) {
-    this.libraryRoot = resolve(
-      this.configService.getOrThrow<string>('STORAGE_ROOT'),
-    );
+    this.libraryRoot = resolve(this.configService.getOrThrow<string>('STORAGE_ROOT'));
   }
 
   getShardPath(id: string): string {
@@ -71,12 +69,7 @@ export class StorageService implements IStorageService {
     createDirectory = false,
   ): Promise<string> {
     const shard = this.getShardPath(documentId);
-    const filePath = join(
-      this.libraryRoot,
-      bucket,
-      shard,
-      `${documentId}${extension}`,
-    );
+    const filePath = join(this.libraryRoot, bucket, shard, `${documentId}${extension}`);
 
     if (createDirectory) {
       await mkdir(dirname(filePath), { recursive: true });

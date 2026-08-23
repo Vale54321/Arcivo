@@ -17,8 +17,6 @@ describe(AdminGuard.name, () => {
   });
 
   it.each([false, undefined])('rejects non-administrators', (isAdmin) => {
-    expect(() => guard.canActivate(contextFor(isAdmin))).toThrow(
-      ForbiddenException,
-    );
+    expect(() => guard.canActivate(contextFor(isAdmin))).toThrow(ForbiddenException);
   });
 });

@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { unlink } from 'node:fs/promises';
 import { access } from 'node:fs/promises';
 import { constants } from 'node:fs';
@@ -49,9 +45,7 @@ export class DocumentService extends BaseService {
     const extension = extname(filename).toLowerCase();
 
     const checksum = await this.fileHashService.getSha1(file.path);
-    const fileDate = dto.fileCreatedAt
-      ? new Date(dto.fileCreatedAt)
-      : new Date();
+    const fileDate = dto.fileCreatedAt ? new Date(dto.fileCreatedAt) : new Date();
 
     this.logger.debug(`Temp name: ${file.path}`);
     this.logger.debug(`File name: ${filename}`);
@@ -61,14 +55,9 @@ export class DocumentService extends BaseService {
     this.logger.debug(`File checksum: ${checksum}`);
     this.logger.debug(`File created at: ${fileDate.toISOString()}`);
 
-    const duplicate = await this.documentRepository.findByChecksum(
-      ownerId,
-      checksum,
-    );
+    const duplicate = await this.documentRepository.findByChecksum(ownerId, checksum);
     if (duplicate) {
-      this.logger.log(
-        `Duplicate checksum hit for ${filename}: ${duplicate.id}`,
-      );
+      this.logger.log(`Duplicate checksum hit for ${filename}: ${duplicate.id}`);
       await this.deleteTempFile(file.path);
       return { status: 'duplicate', id: duplicate.id };
     }
@@ -103,10 +92,7 @@ export class DocumentService extends BaseService {
       await this.deleteTempFile(file.path);
 
       if (error instanceof Error) {
-        this.logger.error(
-          `Failed to process ${filename}: ${error.message}`,
-          error.stack,
-        );
+        this.logger.error(`Failed to process ${filename}: ${error.message}`, error.stack);
       } else {
         this.logger.error(`Failed to process ${filename}: ${String(error)}`);
       }
@@ -114,17 +100,11 @@ export class DocumentService extends BaseService {
     }
   }
 
-  async getDocumentByChecksum(
-    ownerId: string,
-    checksum: string,
-  ): Promise<{ id: string } | null> {
+  async getDocumentByChecksum(ownerId: string, checksum: string): Promise<{ id: string } | null> {
     return await this.documentRepository.findByChecksum(ownerId, checksum);
   }
 
-  async getDocumentById(
-    ownerId: string,
-    id: string,
-  ): Promise<DocumentResponse> {
+  async getDocumentById(ownerId: string, id: string): Promise<DocumentResponse> {
     const doc = await this.documentRepository.findByIdForOwner(id, ownerId);
     if (!doc) throw new NotFoundException(`Document ${id} not found`);
     return this.toDocumentResponse(doc);
@@ -143,10 +123,7 @@ export class DocumentService extends BaseService {
       StorageBucket.THUMBS,
     );
 
-    await this.ensureFileExists(
-      thumbnailPath,
-      `Thumbnail for document ${id} not found`,
-    );
+    await this.ensureFileExists(thumbnailPath, `Thumbnail for document ${id} not found`);
 
     return thumbnailPath;
   }
@@ -172,10 +149,7 @@ export class DocumentService extends BaseService {
     };
   }
 
-  async getDocumentArchive(
-    ownerId: string,
-    id: string,
-  ): Promise<{ path: string; name: string }> {
+  async getDocumentArchive(ownerId: string, id: string): Promise<{ path: string; name: string }> {
     const doc = await this.documentRepository.findByIdForOwner(id, ownerId);
     if (!doc) throw new NotFoundException(`Document ${id} not found`);
 
@@ -184,10 +158,7 @@ export class DocumentService extends BaseService {
       '.pdf',
       StorageBucket.ARCHIVE,
     );
-    await this.ensureFileExists(
-      archivePath,
-      `Archive for document ${id} not found`,
-    );
+    await this.ensureFileExists(archivePath, `Archive for document ${id} not found`);
 
     return {
       path: archivePath,
@@ -209,21 +180,9 @@ export class DocumentService extends BaseService {
     const deleted = await this.documentRepository.deleteForOwner(id, ownerId);
     if (!deleted) throw new NotFoundException('Document not found');
 
-    await this.storageService.deleteFromBucket(
-      id,
-      doc.extension,
-      StorageBucket.UPLOAD,
-    );
-    await this.storageService.deleteFromBucket(
-      id,
-      '.webp',
-      StorageBucket.THUMBS,
-    );
-    await this.storageService.deleteFromBucket(
-      id,
-      '.pdf',
-      StorageBucket.ARCHIVE,
-    );
+    await this.storageService.deleteFromBucket(id, doc.extension, StorageBucket.UPLOAD);
+    await this.storageService.deleteFromBucket(id, '.webp', StorageBucket.THUMBS);
+    await this.storageService.deleteFromBucket(id, '.pdf', StorageBucket.ARCHIVE);
 
     this.logger.log(`Deleted document ${id} and associated files`);
   }
@@ -260,10 +219,7 @@ export class DocumentService extends BaseService {
     }
   }
 
-  async searchDocuments(
-    ownerId: string,
-    query: string,
-  ): Promise<DocumentSearchResultResponse[]> {
+  async searchDocuments(ownerId: string, query: string): Promise<DocumentSearchResultResponse[]> {
     const term = query.trim();
     this.logger.log(`Searching documents for: "${query}"`);
 
@@ -277,8 +233,7 @@ export class DocumentService extends BaseService {
 
     return docs.map((doc) => {
       const isNameMatch = doc.name.toLowerCase().includes(normalizedTerm);
-      const isContentMatch =
-        doc.textContent?.toLowerCase().includes(normalizedTerm) ?? false;
+      const isContentMatch = doc.textContent?.toLowerCase().includes(normalizedTerm) ?? false;
 
       let matchType: 'filename' | 'content' | 'both' = 'content';
       if (isNameMatch && isContentMatch) matchType = 'both';
@@ -291,10 +246,7 @@ export class DocumentService extends BaseService {
     });
   }
 
-  private async ensureFileExists(
-    filePath: string,
-    message: string,
-  ): Promise<void> {
+  private async ensureFileExists(filePath: string, message: string): Promise<void> {
     try {
       await access(filePath, constants.F_OK);
     } catch {
@@ -305,13 +257,7 @@ export class DocumentService extends BaseService {
   private toSummaryResponse(
     document: Pick<
       DocumentEntity,
-      | 'id'
-      | 'name'
-      | 'size'
-      | 'mimeType'
-      | 'fileCreatedAt'
-      | 'createdAt'
-      | 'hasThumbnail'
+      'id' | 'name' | 'size' | 'mimeType' | 'fileCreatedAt' | 'createdAt' | 'hasThumbnail'
     >,
   ): DocumentSummaryResponse {
     return {

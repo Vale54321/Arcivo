@@ -70,9 +70,9 @@ describe(DocumentService.name, () => {
   });
 
   it('rejects an empty metadata update', async () => {
-    await expect(
-      service.updateDocument(document.ownerId, document.id, {}),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.updateDocument(document.ownerId, document.id, {})).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
     expect(updateForOwner).not.toHaveBeenCalled();
   });
 });
