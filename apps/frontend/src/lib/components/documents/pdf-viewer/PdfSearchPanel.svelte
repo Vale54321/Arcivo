@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { ChevronDown, ChevronUp, Search, X } from '@lucide/svelte';
+	import { ChevronDown, ChevronUp, X } from '@lucide/svelte';
+	import { Input } from '@arcivo/ui-components';
 	import type { PdfSearchResult } from './pdf-viewer-types';
 
 	let {
@@ -27,17 +28,16 @@
 	class="absolute inset-x-2 top-2 z-20 flex max-h-[70vh] flex-col rounded-xl border border-neutral-200 bg-white p-3 shadow-xl sm:static sm:inset-auto sm:max-h-none sm:w-80 sm:shrink-0 sm:rounded-none sm:border-y-0 sm:border-r-0 sm:border-l sm:shadow-none dark:border-neutral-800 dark:bg-neutral-900"
 >
 	<div class="flex items-center gap-2">
-		<Search size={16} class="shrink-0 text-neutral-400" />
-		<input
+		<Input
 			id="arcivo-pdf-search"
-			type="search"
 			bind:value={input}
 			oninput={onSearch}
 			onkeydown={(event) => {
 				if (event.key === 'Enter') onMove(event.shiftKey ? -1 : 1);
 			}}
+			variant="search"
+			containerClass="flex-1"
 			placeholder="Im Dokument suchen"
-			class="h-9 min-w-0 flex-1 rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm text-neutral-900 transition outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:focus:ring-red-950"
 		/>
 		<button
 			type="button"

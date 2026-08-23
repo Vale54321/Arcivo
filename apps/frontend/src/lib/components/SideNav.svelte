@@ -5,6 +5,7 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { currentUser } from '$lib/state/current-user';
+	import { Button } from '@arcivo/ui-components';
 	import NavButton from './NavButton.svelte';
 
 	const sidebar = getSidebarContext();
@@ -65,13 +66,16 @@
 		<a href={resolve('/documents/')}>
 			<ArcivoLogo height="30px" />
 		</a>
-		<button
+		<Button
+			variant="ghost"
+			iconOnly
+			size="sm"
 			onclick={() => sidebar.close()}
 			aria-label="Close sidebar"
-			class="flex items-center justify-center rounded-md p-1 text-neutral-400 transition-colors hover:bg-neutral-200 hover:text-neutral-700 lg:hidden dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
+			class="lg:hidden"
 		>
 			<X size={16} />
-		</button>
+		</Button>
 	</div>
 
 	<ul class="flex flex-1 flex-col gap-0.5 px-2">

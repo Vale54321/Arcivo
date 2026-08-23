@@ -3,7 +3,7 @@
 	import { resolve } from '$app/paths';
 	import { onMount } from 'svelte';
 	import ArcivoLogo from '$lib/components/ArcivoLogo.svelte';
-	import { Spinner } from '@arcivo/ui-components';
+	import { Button, Input } from '@arcivo/ui-components';
 	import { ApiError, api } from '$lib/api';
 	import { getAccessToken, setAccessToken } from '$lib/auth';
 
@@ -63,35 +63,25 @@
 			}}
 			class="space-y-4"
 		>
-			<label class="block">
-				<span class="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-					>E-Mail-Adresse</span
-				>
-				<input
-					bind:value={email}
-					type="email"
-					autocomplete="email"
-					required
-					maxlength="320"
-					class="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2.5 text-sm transition-colors outline-none placeholder:text-neutral-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100"
-					placeholder="name@example.com"
-				/>
-			</label>
+			<Input
+				bind:value={email}
+				label="E-Mail-Adresse"
+				type="email"
+				autocomplete="email"
+				required
+				maxlength={320}
+				placeholder="name@example.com"
+			/>
 
-			<label class="block">
-				<span class="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-					>Passwort</span
-				>
-				<input
-					bind:value={password}
-					type="password"
-					autocomplete="current-password"
-					required
-					minlength="8"
-					maxlength="128"
-					class="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2.5 text-sm transition-colors outline-none placeholder:text-neutral-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100"
-				/>
-			</label>
+			<Input
+				bind:value={password}
+				label="Passwort"
+				type="password"
+				autocomplete="current-password"
+				required
+				minlength={8}
+				maxlength={128}
+			/>
 
 			{#if error}
 				<p
@@ -102,14 +92,16 @@
 				</p>
 			{/if}
 
-			<button
+			<Button
 				type="submit"
-				disabled={submitting}
-				class="flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-red-700 dark:hover:bg-red-600"
+				variant="primary"
+				size="lg"
+				fullWidth
+				loading={submitting}
+				loadingLabel="Anmeldung wird verarbeitet"
 			>
-				{#if submitting}<Spinner size={15} />{/if}
 				Anmelden
-			</button>
+			</Button>
 		</form>
 	</section>
 </main>

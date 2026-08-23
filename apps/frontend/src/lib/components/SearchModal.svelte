@@ -179,9 +179,6 @@
 				placeholder="Dokument suchen…"
 				class="flex-1 bg-transparent text-sm text-neutral-900 outline-none placeholder:text-neutral-400 dark:text-neutral-100 dark:placeholder:text-neutral-500"
 			/>
-			{#if loading}
-				<span class="shrink-0 animate-pulse text-xs text-neutral-400">…</span>
-			{/if}
 			<kbd
 				class="hidden items-center rounded border border-neutral-300 bg-neutral-100 px-1.5 py-0.5 font-mono text-xs text-neutral-400 sm:inline-flex dark:border-neutral-600 dark:bg-neutral-800"
 			>

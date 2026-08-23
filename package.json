@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "install:all": "npm install --workspaces --include-workspace-root",
-    "dev": "nx run-many -t serve --parallel=2 --outputStyle=stream",
+    "dev": "nx run-many -t serve --parallel=3 --outputStyle=stream",
     "build": "nx run-many -t build --outputStyle=stream",
     "lint": "nx run-many -t lint --outputStyle=stream",
     "lint:fix": "nx run-many -t lint:fix --outputStyle=stream",

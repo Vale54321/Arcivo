@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { Button } from '@arcivo/ui-components';
+
 	export let open = false;
 	export let title = 'Bestätigen';
 	export let message = '';
@@ -41,33 +43,10 @@
 		<div
 			class="flex items-center justify-end gap-2 border-t border-neutral-100 px-6 py-4 dark:border-neutral-800"
 		>
-			<button
-				onclick={onCancel}
-				disabled={loading}
-				class="rounded-lg px-4 py-2 text-sm text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-700 disabled:opacity-50 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
-			>
-				Abbrechen
-			</button>
-			<button
-				onclick={onConfirm}
-				disabled={loading}
-				class="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-500 disabled:opacity-50 dark:bg-red-700 dark:hover:bg-red-600"
-			>
-				{#if loading}
-					<svg
-						class="animate-spin"
-						width="14"
-						height="14"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-					>
-						<path d="M21 12a9 9 0 1 1-6.219-8.56" />
-					</svg>
-				{/if}
+			<Button variant="secondary" onclick={onCancel} disabled={loading}>Abbrechen</Button>
+			<Button variant="danger" onclick={onConfirm} {loading}>
 				{confirmLabel}
-			</button>
+			</Button>
 		</div>
 	</div>
 {/if}

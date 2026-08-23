@@ -18,13 +18,23 @@
   "scripts": {
     "build": "svelte-package -i src -o dist",
     "check": "svelte-check --tsconfig ./tsconfig.json",
+    "serve": "vite --config playground/vite.config.ts --host 0.0.0.0 --port 6006",
+    "playground:build": "vite build --config playground/vite.config.ts",
     "test": "npm run check"
   },
   "devDependencies": {
     "@sveltejs/package": "^2.5.8",
+    "@sveltejs/vite-plugin-svelte": "^7.3.0",
+    "@tailwindcss/vite": "^4.3.3",
     "svelte": "^5.51.0",
     "svelte-check": "^4.4.2",
-    "typescript": "^5.9.3"
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.3",
+    "vite": "^8.2.2"
+  },
+  "dependencies": {
+    "@lucide/svelte": "^1.33.0",
+    "shiki": "^4.4.3"
   },
   "peerDependencies": {
     "svelte": "^5.0.0"
