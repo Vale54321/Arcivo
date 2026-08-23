@@ -77,15 +77,15 @@ docker compose logs -f
 ### 3. Run the backend natively
 
 ```sh
-cd backend
+cd apps/backend
 npm ci
 npm run start:dev
 ```
 
 The API is available at `http://localhost:3000/api`, and nodemon restarts it
 when backend source files change. Database migrations run automatically during
-startup. Uploaded and generated files are written to `backend/library` and
-temporary uploads to `backend/temp`; both directories are ignored by Git.
+startup. Uploaded and generated files are written to `apps/backend/library` and
+temporary uploads to `apps/backend/temp`; both directories are ignored by Git.
 
 The initial migration creates a development administrator:
 
@@ -99,7 +99,7 @@ Change this password before using the account outside local development.
 In another terminal:
 
 ```sh
-cd frontend
+cd apps/frontend
 cp .env.example .env
 npm ci
 npm run dev
@@ -113,7 +113,7 @@ docker compose down
 
 ## Production Compose example
 
-The production backend image is still built from `backend/Dockerfile`. Its
+The production backend image is built from `apps/backend/Dockerfile`. Its
 runtime image contains Poppler and only production npm dependencies.
 
 ```yaml

@@ -4,84 +4,41 @@ on:
   push:
 
 jobs:
-  backend:
-    name: Backend lint and static analysis
+  quality:
+    name: Affected quality checks
     runs-on: ubuntu-latest
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: |
-            api-contracts/package-lock.json
-            backend/package-lock.json
+          cache-dependency-path: package-lock.json
 
-      - name: Install contract dependencies
-        working-directory: ./api-contracts
+      - name: Install workspace dependencies
         run: npm ci
 
-      - name: Build API contracts
-        working-directory: ./api-contracts
-        run: npm run build
-
-      - name: Install dependencies
-        working-directory: ./backend
-        run: npm ci
-
-      - name: Lint
-        working-directory: ./backend
-        run: npx eslint "{src,apps,libs,test}/**/*.ts"
-
-      - name: TypeScript analysis
-        if: ${{ always() }}
-        working-directory: ./backend
-        run: npx tsc --noEmit --project tsconfig.json
-
-  frontend:
-    name: Frontend lint and static analysis
-    runs-on: ubuntu-latest
-    env:
-      PUBLIC_API_BASE_URL: /api
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - name: Restore Nx task cache
+        uses: actions/cache@v4
         with:
-          node-version: 24
-          cache: npm
-          cache-dependency-path: |
-            api-contracts/package-lock.json
-            frontend/package-lock.json
+          path: .nx/cache
+          key: nx-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ forgejo.sha }}
+          restore-keys: |
+            nx-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
 
-      - name: Install contract dependencies
-        working-directory: ./api-contracts
-        run: npm ci
-
-      - name: Build API contracts
-        working-directory: ./api-contracts
-        run: npm run build
-
-      - name: Install dependencies
-        working-directory: ./frontend
-        run: npm ci
-
-      - name: Lint
-        working-directory: ./frontend
-        run: npx eslint .
-
-      - name: Svelte and TypeScript analysis
-        if: ${{ always() }}
-        working-directory: ./frontend
-        run: npm run check
-
-      - name: Frontend unit tests
-        working-directory: ./frontend
-        run: npm test
+      - name: Run affected quality checks
+        env:
+          NX_BASE: ${{ forgejo.event.before }}
+          NX_HEAD: ${{ forgejo.sha }}
+          PUBLIC_API_BASE_URL: /api
+        run: |
+          if ! git cat-file -e "$NX_BASE^{commit}" 2>/dev/null; then
+            NX_BASE=$(git hash-object -t tree /dev/null)
+          fi
+          npx nx affected -t lint,check --base="$NX_BASE" --head="$NX_HEAD" --outputStyle=static

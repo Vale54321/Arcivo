@@ -1,7 +1,7 @@
 .git
 .env
 data
-frontend
+apps/frontend
 **/node_modules
 **/dist
 **/build

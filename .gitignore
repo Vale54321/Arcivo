@@ -1,2 +1,10 @@
 .env
 data
+dist
+tmp
+out-tsc
+node_modules
+npm-debug.log
+.nx/cache
+.nx/workspace-data
+.nx/migrate-runs

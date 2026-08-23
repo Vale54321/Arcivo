@@ -31,7 +31,7 @@ services:
     container_name: arcivo_backend
     build:
       context: .
-      dockerfile: ./backend/Dockerfile
+      dockerfile: ./apps/backend/Dockerfile
       target: dev
     ports:
       - 3000:3000
@@ -42,10 +42,13 @@ services:
       - NODE_ENV=development
       - DB_PASSWORD=${DB_PASSWORD}
       - JWT_SECRET=${JWT_SECRET}
+      - STORAGE_ROOT=/app/data/library
     volumes:
-      - ./backend/src:/app/backend/src
-      - ./data/library:/app/backend/library
-      - ./data/temp:/app/backend/temp
+      - ./apps/backend/src:/app/apps/backend/src
+      - ./libs/api-contracts/src:/app/libs/api-contracts/src
+      - ./libs/ui-components/src:/app/libs/ui-components/src
+      - ./data/library:/app/data/library
+      - ./data/temp:/app/apps/backend/temp
     restart: unless-stopped
 
   gotenberg:
