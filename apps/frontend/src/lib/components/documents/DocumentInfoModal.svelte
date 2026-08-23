@@ -1,8 +1,7 @@
 <script lang="ts">
 	import { File as FileIcon } from '@lucide/svelte';
 	import type { Document, DocumentDetails } from '$lib/api';
-	import { Button } from '@arcivo/ui-components';
-	import Modal from '$lib/components/ui/Modal.svelte';
+	import { Button, Modal } from '@arcivo/ui-components';
 
 	let {
 		infoDoc,

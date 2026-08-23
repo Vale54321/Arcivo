@@ -3,7 +3,7 @@
 	import ArcivoLogo from './lib/shared/ArcivoLogo.svelte';
 	import ComponentNav from './lib/shared/ComponentNav.svelte';
 	import { components, type ComponentId } from './lib/shared/components';
-	import { Header } from '../../src';
+	import { Button, Header } from '../../src';
 
 	let darkMode = $state(false);
 	let selectedComponent = $state<ComponentId>('area');
@@ -39,13 +39,9 @@
 					<h1 class="text-lg font-semibold text-neutral-900 dark:text-white">UI Components</h1>
 				</div>
 			</div>
-			<button
-				type="button"
-				onclick={toggleTheme}
-				class="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-semibold text-neutral-700 transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800"
-			>
+			<Button type="button" variant="outline" size="sm" onclick={toggleTheme}>
 				{darkMode ? 'Light mode' : 'Dark mode'}
-			</button>
+			</Button>
 		</div>
 	</header>
 

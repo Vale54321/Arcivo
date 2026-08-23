@@ -5,6 +5,7 @@
 	import { Search } from '@lucide/svelte';
 	import { api, ApiError, type Document, type SearchResult } from '$lib/api';
 	import { documentsResponseSchema } from '@arcivo/api-contracts';
+	import { Overlay } from '@arcivo/ui-components';
 	import { documentViewer, searchQuery } from '$lib/stores';
 	import SearchResultItem from '$lib/components/search/SearchResultItem.svelte';
 
@@ -136,9 +137,6 @@
 				else applyFilter();
 				break;
 			}
-			case 'Escape':
-				close();
-				break;
 		}
 	}
 
@@ -152,20 +150,16 @@
 
 <svelte:window onkeydown={onWindowKeydown} />
 
-{#if searchOpen}
-	<button
-		type="button"
-		class="fixed inset-0 z-40 cursor-default bg-black/20 backdrop-blur-sm"
-		onclick={close}
-		aria-label="Suche schließen"
-	></button>
 
-	<div
-		class="fixed top-1/4 left-1/2 z-50 w-full max-w-lg -translate-x-1/2 rounded-xl border border-red-300 bg-white shadow-2xl dark:border-red-900 dark:bg-neutral-900"
-		role="dialog"
-		aria-modal="true"
-		aria-label="Dokumente suchen"
-	>
+<Overlay
+	open={searchOpen}
+	onClose={close}
+	role="dialog"
+	modal
+	ariaLabel="Dokumente suchen"
+	backdrop="dim"
+	surfaceClass="top-1/4 left-1/2 w-full max-w-lg -translate-x-1/2 border-red-300 shadow-2xl dark:border-red-900"
+>
 		<div
 			class="flex items-center gap-3 border-b border-neutral-200 px-4 py-3 dark:border-neutral-700"
 		>
@@ -222,5 +216,4 @@
 				{/each}
 			</ul>
 		{/if}
-	</div>
-{/if}
+</Overlay>
