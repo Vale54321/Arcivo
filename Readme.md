@@ -117,6 +117,32 @@ Stop the supporting containers with:
 docker compose down
 ```
 
+## Public website and UI playbook
+
+`apps/website` is the static SvelteKit marketing site for `arcivo.de`. It reuses
+the shared `@arcivo/ui-components` library and includes the same document-list
+layout as the application with representative document data.
+
+The interactive UI component playbook lives in `libs/ui-components/playground`
+and is deployed separately at `playbook.arcivo.de`. The website links to both
+the playbook and the protected technical demo at `arcivo.heiserer.de`.
+
+Both are configured as Cloudflare Workers Static Assets projects. After
+authenticating Wrangler to the Cloudflare account that manages the `arcivo.de`
+zone, deploy them from the repository root:
+
+```sh
+npm install
+npm run deploy:website
+npm run deploy:ui-playbook
+```
+
+The source-controlled Wrangler configurations create the `arcivo.de` and
+`playbook.arcivo.de` custom domains. Cloudflare must manage the zone, and the
+target hostnames must not already have conflicting DNS records. For local
+Workers previews, use `npm run dev:worker --workspace @arcivo/website` or
+`npm run dev:worker --workspace @arcivo/ui-components` after building.
+
 ## Production Compose example
 
 The production backend image is built from `apps/backend/Dockerfile`. Its
