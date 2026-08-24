@@ -1,4 +1,5 @@
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { UserCredentialsEntity, UserEntity } from 'database/database.types';
 import { PasswordService } from 'user/password.service';
 import { UserService } from 'user/user.service';
@@ -29,16 +30,19 @@ describe(AuthService.name, () => {
     UserService['findByEmailForAuthentication']
   >;
   let verify: jest.MockedFunction<PasswordService['verify']>;
+  let getConfig: jest.Mock;
   let service: AuthService;
 
   beforeEach(() => {
     signAsync = jest.fn().mockResolvedValue('signed.jwt.token');
     findByEmailForAuthentication = jest.fn();
     verify = jest.fn();
+    getConfig = jest.fn();
     service = new AuthService(
       { signAsync } as unknown as JwtService,
       { findByEmailForAuthentication } as unknown as UserService,
       { verify } as unknown as PasswordService,
+      { get: getConfig } as unknown as ConfigService,
     );
   });
 
@@ -83,5 +87,24 @@ describe(AuthService.name, () => {
       expect.stringMatching(/^\$argon2id\$/),
       'correct horse battery staple',
     );
+  });
+
+  it('issues a token for the default administrator only when development auto-auth is enabled', async () => {
+    getConfig.mockImplementation((key: string) =>
+      key === 'DEV_AUTO_AUTH_DEFAULT_ADMIN' ? true : 'development',
+    );
+    findByEmailForAuthentication.mockResolvedValue(credentials);
+
+    await expect(service.loginAsDefaultAdminForDevelopment()).resolves.toEqual({
+      accessToken: 'signed.jwt.token',
+    });
+  });
+
+  it('never enables development auto-auth in production', async () => {
+    getConfig.mockImplementation((key: string) =>
+      key === 'DEV_AUTO_AUTH_DEFAULT_ADMIN' ? true : 'production',
+    );
+
+    await expect(service.loginAsDefaultAdminForDevelopment()).rejects.toThrow();
   });
 });

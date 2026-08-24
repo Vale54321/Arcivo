@@ -31,4 +31,14 @@ export class AuthController {
   ): Promise<AccessTokenResponse> {
     return accessTokenResponseSchema.parse(await this.authService.login(dto));
   }
+
+  @Post('development-login')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Sign in as the default administrator during local development' })
+  @ApiOkResponse({ description: 'Signed JWT access token' })
+  async developmentLogin(): Promise<AccessTokenResponse> {
+    return accessTokenResponseSchema.parse(
+      await this.authService.loginAsDefaultAdminForDevelopment(),
+    );
+  }
 }

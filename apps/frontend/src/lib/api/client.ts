@@ -38,6 +38,7 @@ interface ResponseSchema<T> {
 const API_PATHS = {
 	documents: '/v1/document',
 	login: '/v1/auth/login',
+	developmentLogin: '/v1/auth/development-login',
 	users: '/v1/users',
 	events: '/v1/events'
 } as const;
@@ -75,6 +76,10 @@ export class ArcivoApi {
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ email, password })
 		});
+	}
+
+	developmentLogin(): Promise<AccessTokenResponse> {
+		return this.request(accessTokenResponseSchema, API_PATHS.developmentLogin, { method: 'POST' });
 	}
 
 	getCurrentUser(): Promise<User> {

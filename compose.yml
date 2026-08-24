@@ -42,6 +42,7 @@ services:
       - NODE_ENV=development
       - DB_PASSWORD=${DB_PASSWORD}
       - JWT_SECRET=${JWT_SECRET}
+      - DEV_AUTO_AUTH_DEFAULT_ADMIN=${DEV_AUTO_AUTH_DEFAULT_ADMIN:-false}
       - STORAGE_ROOT=/app/data/library
     volumes:
       - ./apps/backend/src:/app/apps/backend/src

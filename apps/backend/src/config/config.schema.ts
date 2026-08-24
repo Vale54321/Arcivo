@@ -23,6 +23,9 @@ export const configValidationSchema = Joi.object({
   JWT_ACCESS_TOKEN_TTL: Joi.string()
     .pattern(/^\d+[smhd]$/)
     .default('15m'),
+  // Local development only. When enabled, the frontend can request a token for
+  // the seeded administrator without submitting credentials.
+  DEV_AUTO_AUTH_DEFAULT_ADMIN: Joi.boolean().default(false),
 
   // Keep uploaded files outside the application directory so app relocations
   // and rebuilds do not make existing documents unavailable.

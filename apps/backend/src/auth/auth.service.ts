@@ -1,4 +1,5 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { UserEntity } from 'database/database.types';
 import { UserService } from 'user/user.service';
@@ -8,6 +9,7 @@ import { JwtPayload } from './interfaces/jwt-payload.interface';
 
 const DUMMY_PASSWORD_HASH =
   '$argon2id$v=19$m=65536,p=4,t=3$/nCF7yxUaMMlTjcEon0smA$wtS04jbhulPEGPH8uMeXSyA2mAdH9R6NC8mgoYfB/SM';
+const DEFAULT_ADMIN_EMAIL = 'admin@example.com';
 
 @Injectable()
 export class AuthService {
@@ -15,6 +17,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly userService: UserService,
     private readonly passwordService: PasswordService,
+    private readonly configService: ConfigService,
   ) {}
 
   async login(dto: LoginRequest): Promise<AccessTokenResponse> {
@@ -26,6 +29,17 @@ export class AuthService {
     if (!user || !isPasswordValid) {
       throw new UnauthorizedException('Invalid email or password');
     }
+
+    return await this.issueAccessToken(user);
+  }
+
+  async loginAsDefaultAdminForDevelopment(): Promise<AccessTokenResponse> {
+    const enabled = this.configService.get<boolean>('DEV_AUTO_AUTH_DEFAULT_ADMIN');
+    const isProduction = this.configService.get<string>('NODE_ENV') === 'production';
+    if (!enabled || isProduction) throw new NotFoundException();
+
+    const user = await this.userService.findByEmailForAuthentication(DEFAULT_ADMIN_EMAIL);
+    if (!user?.isAdmin) throw new NotFoundException();
 
     return await this.issueAccessToken(user);
   }

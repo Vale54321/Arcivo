@@ -44,6 +44,8 @@ Create a `.env` file in the project root:
 ```env
 DB_PASSWORD=<PASSWORD>
 JWT_SECRET=<generate-with-openssl-rand-base64-48>
+# Optional: automatically sign in as admin@example.com during local development.
+DEV_AUTO_AUTH_DEFAULT_ADMIN=true
 ```
 
 `JWT_SECRET` must be a unique random value with at least 32 characters. The
@@ -52,6 +54,10 @@ backend loads this root `.env` file when started from the `backend` directory.
 Development defaults connect to PostgreSQL and Valkey on `localhost` and to
 Gotenberg at `http://localhost:3001`. These can be overridden with `DB_HOST`,
 `DB_PORT`, `REDIS_HOST`, `REDIS_PORT`, and `GOTENBERG_URL` in `.env`.
+
+`DEV_AUTO_AUTH_DEFAULT_ADMIN` is disabled by default. Enable it only for local
+development to automatically sign in as the seeded `admin@example.com` account.
+It is unavailable when the backend runs with `NODE_ENV=production`.
 
 ### 2. Start the supporting services
 

@@ -12,10 +12,11 @@
 	import { setSidebarContext } from '$lib/state/sidebar.svelte';
 	import { setThemeContext } from '$lib/state/theme.svelte';
 	import { events } from '$lib/events';
-	import { accessToken } from '$lib/auth';
+	import { accessToken, getAccessToken, setAccessToken } from '$lib/auth';
 	import { clearCurrentUser, setCurrentUser } from '$lib/state/current-user';
 
 	let { children } = $props();
+	let authInitializationPending = $state(true);
 
 	setSidebarContext();
 	setThemeContext();
@@ -34,7 +35,7 @@
 	});
 
 	$effect(() => {
-		if (!$accessToken && !isLoginRoute) {
+		if (!authInitializationPending && !$accessToken && !isLoginRoute) {
 			void goto(resolve('/login'), { replaceState: true });
 		}
 		if ($accessToken && isLoginRoute) {
@@ -56,6 +57,16 @@
 	}
 
 	onMount(() => {
+		if (!getAccessToken()) {
+			void api
+				.developmentLogin()
+				.then(({ accessToken }) => setAccessToken(accessToken))
+				.catch(() => undefined)
+				.finally(() => (authInitializationPending = false));
+		} else {
+			authInitializationPending = false;
+		}
+
 		const splash = document.getElementById('arcivo-splash');
 		if (splash) {
 			requestAnimationFrame(() => {
