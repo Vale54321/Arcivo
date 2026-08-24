@@ -11,7 +11,7 @@
 </script>
 
 <section
-	class="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
+	class="rounded-xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
 >
 	<div class="border-b border-neutral-200 px-5 py-4 dark:border-neutral-800">
 		<h2 class="text-base font-semibold text-neutral-900 dark:text-neutral-100">{title}</h2>

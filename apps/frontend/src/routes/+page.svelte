@@ -22,7 +22,7 @@
 		truncateFilename
 	} from '$lib/components/documents/document-formatters';
 
-	let fileInput: HTMLInputElement;
+	let fileInput = $state<HTMLInputElement | null>(null);
 	let docs = $state<Document[]>([]);
 	let loading = $state(true);
 	let pendingFile = $state<string | null>(null);

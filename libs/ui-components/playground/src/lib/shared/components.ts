@@ -2,6 +2,7 @@ import type { Component } from 'svelte';
 import ActionItemShowcase from '../components/action-item/ActionItemShowcase.svelte';
 import AreaShowcase from '../components/area/AreaShowcase.svelte';
 import ButtonShowcase from '../components/button/ButtonShowcase.svelte';
+import ComboboxShowcase from '../components/combobox/ComboboxShowcase.svelte';
 import HeaderShowcase from '../components/header/HeaderShowcase.svelte';
 import InputShowcase from '../components/input/InputShowcase.svelte';
 import ModalShowcase from '../components/modal/ModalShowcase.svelte';
@@ -13,6 +14,7 @@ export type ComponentId =
 	| 'action-item'
 	| 'area'
 	| 'button'
+	| 'combobox'
 	| 'header'
 	| 'input'
 	| 'modal'
@@ -45,6 +47,12 @@ export const components: ComponentDefinition[] = [
     name: 'Button',
     description: 'Triggers actions with consistent variants, sizes, and states.',
     showcase: ButtonShowcase,
+  },
+  {
+    id: 'combobox',
+    name: 'Combobox',
+    description: 'Lets people choose one or more options, with optional search, groups, avatars, and clearing.',
+    showcase: ComboboxShowcase,
   },
   {
     id: 'header',

@@ -11,3 +11,5 @@ export { default as Overlay } from './Overlay.svelte';
 export type { OverlayBackdrop, OverlayRole } from './Overlay.svelte';
 export { default as Modal } from './Modal.svelte';
 export type { ModalSize } from './Modal.svelte';
+export { default as Combobox } from './Combobox.svelte';
+export type { ComboboxGroup, ComboboxItem } from './combobox';

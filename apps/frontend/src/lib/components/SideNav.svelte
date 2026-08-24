@@ -11,7 +11,7 @@
 
 	type MenuItem = {
 		name: string;
-		href?: '/documents/';
+		href?: '/documents/' | '/settings';
 		icon: LucideIcon;
 		soon?: boolean;
 	};
@@ -44,6 +44,7 @@
 	const accountName = $derived($currentUser?.displayName || 'Konto');
 	const accountInitials = $derived(initials(accountName));
 	const accountIsActive = $derived(page.url.pathname.startsWith('/account'));
+	const settingsIsActive = $derived(page.url.pathname.startsWith('/settings'));
 
 	function isActive(href?: string, soon = false): boolean {
 		if (soon || !href) return false;
@@ -104,7 +105,7 @@
 
 	<ul class="flex flex-col gap-0.5 border-t border-neutral-200 px-2 pt-4 dark:border-neutral-800">
 		<li>
-			<NavItem label="Einstellungen" disabled badge="Soon" title="Demnächst verfügbar">
+			<NavItem label="Einstellungen" href={resolve('/settings')} active={settingsIsActive}>
 				{#snippet leading()}
 					<Settings size={18} />
 				{/snippet}

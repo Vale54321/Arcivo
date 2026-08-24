@@ -20,7 +20,9 @@
 	setSidebarContext();
 	setThemeContext();
 	const isLoginRoute = $derived(page.url.pathname === '/login/');
-	const isScrollablePage = $derived(page.url.pathname.startsWith('/account'));
+	const isScrollablePage = $derived(
+		page.url.pathname.startsWith('/account') || page.url.pathname.startsWith('/settings')
+	);
 
 	$effect(() => {
 		if (!$accessToken) {
