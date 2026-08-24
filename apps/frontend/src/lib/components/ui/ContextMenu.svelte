@@ -54,11 +54,7 @@
 			{#if item.separated}
 				<div class="my-1 border-t border-neutral-100 dark:border-neutral-800"></div>
 			{/if}
-			<ActionItem
-				role="menuitem"
-				onclick={() => select(item)}
-				danger={item.danger}
-			>
+			<ActionItem role="menuitem" onclick={() => select(item)} danger={item.danger}>
 				{#snippet leading()}
 					<item.icon size={16} />
 				{/snippet}

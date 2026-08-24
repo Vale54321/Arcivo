@@ -122,7 +122,7 @@
 			const updated = await api.updateUser(editingUserId, {
 				email: editEmail.trim(),
 				displayName: editDisplayName.trim()
-		});
+			});
 			users = users.map((user) => (user.id === updated.id ? updated : user));
 			editingUserId = null;
 			resetEditForm();
@@ -277,7 +277,9 @@
 			class="border-t border-neutral-200 pt-5 dark:border-neutral-800"
 		>
 			<div class="mb-4">
-				<h3 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Passwort zurücksetzen</h3>
+				<h3 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+					Passwort zurücksetzen
+				</h3>
 				<p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
 					Lege ein neues Passwort für diesen Benutzer fest.
 				</p>

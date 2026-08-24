@@ -59,7 +59,9 @@
 		<div class="flex w-full flex-col items-center gap-4 text-center">
 			<ArcivoLogo height="40px" />
 			<div>
-				<h1 class="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Willkommen zurück</h1>
+				<h1 class="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
+					Willkommen zurück
+				</h1>
 				<p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">Melde dich bei Arcivo an.</p>
 			</div>
 		</div>
