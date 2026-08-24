@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Download, ExternalLink, FileText, X } from '@lucide/svelte';
+	import { Button } from '@arcivo/ui-components';
 
 	let {
 		documentName,
@@ -26,31 +27,39 @@
 		</h2>
 		<p class="text-xs text-neutral-500 dark:text-neutral-400">PDF-Archivversion</p>
 	</div>
-	<button
+	<Button
 		type="button"
+		variant="ghost"
+		iconOnly
+		size="sm"
 		onclick={onOpenInNewTab}
 		title="In neuem Tab öffnen"
 		aria-label="In neuem Tab öffnen"
-		class="viewer-button hidden sm:flex"
+		class="hidden sm:inline-flex"
 	>
 		<ExternalLink size={17} />
-	</button>
-	<button
+	</Button>
+	<Button
 		type="button"
+		variant="ghost"
+		iconOnly
+		size="sm"
 		onclick={onDownload}
 		title="PDF herunterladen"
 		aria-label="PDF herunterladen"
-		class="viewer-button hidden sm:flex"
+		class="hidden sm:inline-flex"
 	>
 		<Download size={17} />
-	</button>
-	<button
+	</Button>
+	<Button
 		type="button"
+		variant="ghost"
+		iconOnly
+		size="sm"
 		onclick={onClose}
 		title="Viewer schließen"
 		aria-label="Viewer schließen"
-		class="viewer-button"
 	>
 		<X size={19} />
-	</button>
+	</Button>
 </div>

@@ -8,6 +8,7 @@
 		RotateCw,
 		Search
 	} from '@lucide/svelte';
+	import { Input } from '@arcivo/ui-components';
 
 	let {
 		pageNumber,
@@ -54,13 +55,15 @@
 		</button>
 		<label class="flex items-center gap-1 text-xs text-neutral-500 dark:text-neutral-400">
 			<span class="sr-only">Seite</span>
-			<input
+			<Input
+				variant="bare"
+				containerClass="flex-none"
 				type="number"
 				min="1"
 				max={pageCount || 1}
 				value={pageNumber}
 				onchange={(event) => onSetPage(Number(event.currentTarget.value))}
-				class="h-8 w-12 rounded-md border border-neutral-200 bg-white px-1 text-center text-sm text-neutral-800 outline-none focus:border-red-400 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+				class="h-8 w-12 flex-none rounded-md border-neutral-200 bg-white px-1 text-center text-sm text-neutral-800 focus:border-red-400 focus:ring-red-100 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
 			/>
 			<span>/ {pageCount || '–'}</span>
 		</label>

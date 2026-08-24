@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Document, MatchType } from '$lib/api';
 	import { formatSize, mimeIcon } from '$lib/components/documents/document-formatters';
+	import { ActionItem } from '@arcivo/ui-components';
 
 	interface Props {
 		doc: Document;
@@ -44,32 +45,26 @@
 </script>
 
 <li>
-	<button
-		type="button"
-		onclick={() => onSelect(doc)}
-		class="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors {highlighted
-			? 'bg-neutral-100 dark:bg-neutral-800'
-			: 'hover:bg-neutral-50 dark:hover:bg-neutral-800'}"
-	>
-		<span class="shrink-0 text-neutral-400">
+	<ActionItem active={highlighted} onclick={() => onSelect(doc)}>
+		{#snippet leading()}
 			<Icon size={16} />
-		</span>
-		<span class="flex-1 truncate text-sm text-neutral-800 dark:text-neutral-100">
-			{#each titleParts as part, index (index)}
-				{#if part.highlighted}
-					<span class="font-semibold text-red-600 dark:text-red-400">{part.text}</span>
-				{:else}
-					{part.text}
-				{/if}
-			{/each}
-		</span>
-		{#if showContentBadge}
-			<span
-				class="shrink-0 rounded bg-red-100 px-1.5 py-0.5 font-mono text-xs text-red-600 dark:bg-red-950 dark:text-red-400"
-			>
-				Inhalt
-			</span>
-		{/if}
-		<span class="shrink-0 text-xs text-neutral-400">{formatSize(doc.size)}</span>
-	</button>
+		{/snippet}
+		{#each titleParts as part, index (index)}
+			{#if part.highlighted}
+				<span class="font-semibold text-red-600 dark:text-red-400">{part.text}</span>
+			{:else}
+				{part.text}
+			{/if}
+		{/each}
+		{#snippet trailing()}
+			{#if showContentBadge}
+				<span
+					class="rounded bg-red-100 px-1.5 py-0.5 font-mono text-xs text-red-600 dark:bg-red-950 dark:text-red-400"
+				>
+					Inhalt
+				</span>
+			{/if}
+			<span class="text-xs text-neutral-400">{formatSize(doc.size)}</span>
+		{/snippet}
+	</ActionItem>
 </li>

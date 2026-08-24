@@ -6,6 +6,7 @@
 	import { getThemeContext } from '$lib/state/theme.svelte';
 	import { uploadOpen } from '$lib/stores';
 	import { Menu, Moon, Search, Sun, SunMoon, Upload } from '@lucide/svelte';
+	import { Button } from '@arcivo/ui-components';
 	import SearchModal from './SearchModal.svelte';
 
 	const sidebar = getSidebarContext();
@@ -30,13 +31,16 @@
 	class="flex h-14 shrink-0 items-center border-b border-neutral-200 bg-white px-4 dark:border-neutral-800 dark:bg-neutral-950"
 >
 	<!-- Burger menu -->
-	<button
+	<Button
+		variant="ghost"
+		iconOnly
+		size="sm"
 		onclick={() => sidebar.toggle()}
-		class="mr-3 flex items-center justify-center rounded-md p-1.5 text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900 lg:hidden dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
+		class="mr-3 lg:hidden"
 		aria-label="Open sidebar"
 	>
 		<Menu size={20} />
-	</button>
+	</Button>
 
 	<div class="flex flex-1 items-center justify-center">
 		<button
@@ -56,9 +60,11 @@
 	</div>
 
 	<!-- Theme toggle -->
-	<button
+	<Button
+		variant="ghost"
+		iconOnly
 		onclick={theme.toggle}
-		class="ml-3 flex shrink-0 items-center justify-center rounded-md p-1.5 text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
+		class="ml-3"
 		aria-label={themeMessage}
 		title={themeMessage}
 	>
@@ -69,16 +75,12 @@
 		{:else}
 			<Sun size={18} />
 		{/if}
-	</button>
+	</Button>
 
-	<button
-		type="button"
-		onclick={() => void openUpload()}
-		class="ml-2 flex shrink-0 items-center gap-2 rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-red-500 dark:bg-red-700 dark:hover:bg-red-600"
-	>
+	<Button type="button" variant="primary" onclick={() => void openUpload()} class="ml-2">
 		<Upload size={15} />
 		<span class="hidden sm:inline">Hochladen</span>
-	</button>
+	</Button>
 </header>
 
 <SearchModal bind:this={searchModal} />

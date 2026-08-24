@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { FileText } from '@lucide/svelte';
+	import { Button } from '@arcivo/ui-components';
 
 	let { message, onOpenInNewTab }: { message: string; onOpenInNewTab: () => void } = $props();
 </script>
@@ -13,12 +14,8 @@
 			Die PDF konnte nicht geladen werden.
 		</p>
 		<p class="mt-1 max-w-lg text-xs text-neutral-500 dark:text-neutral-400">{message}</p>
-		<button
-			type="button"
-			onclick={onOpenInNewTab}
-			class="mt-2 text-sm text-red-600 hover:underline dark:text-red-400"
-		>
+		<Button type="button" variant="link" onclick={onOpenInNewTab} class="mt-2">
 			Archivversion im Browser öffnen
-		</button>
+		</Button>
 	</div>
 </div>

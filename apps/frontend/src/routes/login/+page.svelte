@@ -3,7 +3,7 @@
 	import { resolve } from '$app/paths';
 	import { onMount } from 'svelte';
 	import ArcivoLogo from '$lib/components/ArcivoLogo.svelte';
-	import { Spinner } from '@arcivo/ui-components';
+	import { Button, Input, Modal } from '@arcivo/ui-components';
 	import { ApiError, api } from '$lib/api';
 	import { getAccessToken, setAccessToken } from '$lib/auth';
 
@@ -36,80 +36,82 @@
 			submitting = false;
 		}
 	}
+
+	function keepLoginOpen(): void {}
 </script>
 
 <svelte:head>
 	<title>Anmelden · Arcivo</title>
 </svelte:head>
 
-<main class="flex min-h-screen items-center justify-center bg-neutral-50 p-4 dark:bg-neutral-950">
-	<section
-		class="w-full max-w-sm rounded-2xl border border-neutral-200 bg-white p-7 shadow-xl shadow-neutral-200/40 dark:border-neutral-800 dark:bg-neutral-900 dark:shadow-black/20"
-	>
-		<div class="mb-7 flex flex-col items-center gap-4">
+<div class="min-h-screen bg-neutral-50 dark:bg-neutral-950" aria-hidden="true"></div>
+
+<Modal
+	open={true}
+	onClose={keepLoginOpen}
+	title="Anmelden"
+	ariaLabel="Bei Arcivo anmelden"
+	size="sm"
+	dismissOnEscape={false}
+	dismissOnBackdrop={false}
+>
+	{#snippet header()}
+		<div class="flex w-full flex-col items-center gap-4 text-center">
 			<ArcivoLogo height="40px" />
-			<div class="text-center">
+			<div>
 				<h1 class="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
 					Willkommen zurück
 				</h1>
 				<p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">Melde dich bei Arcivo an.</p>
 			</div>
 		</div>
+	{/snippet}
 
-		<form
-			onsubmit={(event) => {
-				event.preventDefault();
-				void submit();
-			}}
-			class="space-y-4"
-		>
-			<label class="block">
-				<span class="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-					>E-Mail-Adresse</span
-				>
-				<input
-					bind:value={email}
-					type="email"
-					autocomplete="email"
-					required
-					maxlength="320"
-					class="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2.5 text-sm transition-colors outline-none placeholder:text-neutral-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100"
-					placeholder="name@example.com"
-				/>
-			</label>
+	<form
+		onsubmit={(event) => {
+			event.preventDefault();
+			void submit();
+		}}
+		class="space-y-4"
+	>
+		<Input
+			bind:value={email}
+			label="E-Mail-Adresse"
+			type="email"
+			autocomplete="email"
+			required
+			maxlength={320}
+			placeholder="name@example.com"
+		/>
 
-			<label class="block">
-				<span class="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-					>Passwort</span
-				>
-				<input
-					bind:value={password}
-					type="password"
-					autocomplete="current-password"
-					required
-					minlength="8"
-					maxlength="128"
-					class="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2.5 text-sm transition-colors outline-none placeholder:text-neutral-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100"
-				/>
-			</label>
+		<Input
+			bind:value={password}
+			label="Passwort"
+			type="password"
+			autocomplete="current-password"
+			required
+			minlength={8}
+			maxlength={128}
+		/>
 
-			{#if error}
-				<p
-					role="alert"
-					class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300"
-				>
-					{error}
-				</p>
-			{/if}
-
-			<button
-				type="submit"
-				disabled={submitting}
-				class="flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-red-700 dark:hover:bg-red-600"
+		{#if error}
+			<p
+				role="alert"
+				class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300"
 			>
-				{#if submitting}<Spinner size={15} />{/if}
-				Anmelden
-			</button>
-		</form>
-	</section>
-</main>
+				{error}
+			</p>
+		{/if}
+
+		<Button
+			type="submit"
+			variant="primary"
+			size="lg"
+			fullWidth
+			loading={submitting}
+			loadingLabel="Anmeldung wird verarbeitet"
+		>
+			Anmelden
+		</Button>
+	</form>
+</Modal>

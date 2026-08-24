@@ -5,13 +5,13 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { currentUser } from '$lib/state/current-user';
-	import NavButton from './NavButton.svelte';
+	import { Button, NavItem } from '@arcivo/ui-components';
 
 	const sidebar = getSidebarContext();
 
 	type MenuItem = {
 		name: string;
-		href?: string;
+		href?: '/documents/';
 		icon: LucideIcon;
 		soon?: boolean;
 	};
@@ -44,6 +44,11 @@
 	const accountName = $derived($currentUser?.displayName || 'Konto');
 	const accountInitials = $derived(initials(accountName));
 	const accountIsActive = $derived(page.url.pathname.startsWith('/account'));
+
+	function isActive(href?: string, soon = false): boolean {
+		if (soon || !href) return false;
+		return href === '/' ? page.url.pathname === '/' : page.url.pathname.startsWith(href);
+	}
 </script>
 
 <svelte:window onkeydown={handleWindowKeydown} />
@@ -65,23 +70,46 @@
 		<a href={resolve('/documents/')}>
 			<ArcivoLogo height="30px" />
 		</a>
-		<button
+		<Button
+			variant="ghost"
+			iconOnly
+			size="sm"
 			onclick={() => sidebar.close()}
 			aria-label="Close sidebar"
-			class="flex items-center justify-center rounded-md p-1 text-neutral-400 transition-colors hover:bg-neutral-200 hover:text-neutral-700 lg:hidden dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
+			class="lg:hidden"
 		>
 			<X size={16} />
-		</button>
+		</Button>
 	</div>
 
 	<ul class="flex flex-1 flex-col gap-0.5 px-2">
 		{#each navItems as item (item.name)}
-			<NavButton {...item} />
+			{@const Icon = item.icon}
+			<li>
+				<NavItem
+					label={item.name}
+					href={item.href ? resolve(item.href) : undefined}
+					active={isActive(item.href, item.soon)}
+					disabled={item.soon}
+					badge={item.soon ? 'Soon' : undefined}
+					title={item.soon ? 'Demnächst verfügbar' : undefined}
+				>
+					{#snippet leading()}
+						<Icon size={18} />
+					{/snippet}
+				</NavItem>
+			</li>
 		{/each}
 	</ul>
 
 	<ul class="flex flex-col gap-0.5 border-t border-neutral-200 px-2 pt-4 dark:border-neutral-800">
-		<NavButton name="Einstellungen" icon={Settings} soon />
+		<li>
+			<NavItem label="Einstellungen" disabled badge="Soon" title="Demnächst verfügbar">
+				{#snippet leading()}
+					<Settings size={18} />
+				{/snippet}
+			</NavItem>
+		</li>
 		<li class="mt-2 min-w-0">
 			<a
 				href={resolve('/account')}

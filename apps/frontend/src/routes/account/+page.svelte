@@ -4,7 +4,7 @@
 	import { onMount } from 'svelte';
 	import { ApiError, api, type User } from '$lib/api';
 	import { clearAccessToken } from '$lib/auth';
-	import { Spinner } from '@arcivo/ui-components';
+	import { Area, Button, Header, Input, Spinner } from '@arcivo/ui-components';
 	import { setCurrentUser } from '$lib/state/current-user';
 	import AdminUserManagement from '$lib/components/users/AdminUserManagement.svelte';
 	import { LogOut } from '@lucide/svelte';
@@ -71,12 +71,7 @@
 </svelte:head>
 
 <div class="mx-auto w-full max-w-xl">
-	<div class="mb-7">
-		<h1 class="text-2xl font-semibold text-neutral-900 dark:text-neutral-100">Mein Konto</h1>
-		<p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-			Verwalte deine persönlichen Kontodaten.
-		</p>
-	</div>
+	<Header level={1} title="Mein Konto" description="Verwalte deine persönlichen Kontodaten." />
 
 	{#if loading}
 		<div
@@ -92,82 +87,70 @@
 			{error}
 		</div>
 	{:else if user}
-		<form
-			onsubmit={(event) => {
-				event.preventDefault();
-				void save();
-			}}
-			class="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
-		>
-			<div class="space-y-5">
-				<label class="block">
-					<span class="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-						>Anzeigename</span
-					>
-					<input
+		<Area title="Kontodaten">
+			<form
+				onsubmit={(event) => {
+					event.preventDefault();
+					void save();
+				}}
+			>
+				<div class="space-y-5">
+					<Input
 						bind:value={displayName}
+						label="Anzeigename"
 						type="text"
 						autocomplete="name"
 						required
-						maxlength="100"
-						class="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2.5 text-sm transition-colors outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100"
+						maxlength={100}
 					/>
-				</label>
 
-				<label class="block">
-					<span class="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-						>E-Mail-Adresse</span
-					>
-					<input
+					<Input
 						bind:value={email}
+						label="E-Mail-Adresse"
 						type="email"
 						autocomplete="email"
 						required
-						maxlength="320"
-						class="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2.5 text-sm transition-colors outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100"
+						maxlength={320}
 					/>
-				</label>
-			</div>
+				</div>
 
-			{#if error}
-				<p
-					role="alert"
-					class="mt-5 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300"
-				>
-					{error}
-				</p>
-			{/if}
-			{#if success}
-				<p
-					role="status"
-					class="mt-5 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
-				>
-					{success}
-				</p>
-			{/if}
+				{#if error}
+					<p
+						role="alert"
+						class="mt-5 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300"
+					>
+						{error}
+					</p>
+				{/if}
+				{#if success}
+					<p
+						role="status"
+						class="mt-5 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
+					>
+						{success}
+					</p>
+				{/if}
 
-			<div
-				class="mt-6 flex items-center justify-between border-t border-neutral-200 pt-5 dark:border-neutral-800"
-			>
-				<button
-					type="button"
-					onclick={() => void logout()}
-					class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
+				<div
+					class="mt-6 flex items-center justify-between border-t border-neutral-200 pt-5 dark:border-neutral-800"
 				>
-					<LogOut size={16} />
-					Abmelden
-				</button>
+					<Button type="button" variant="ghost" size="md" onclick={() => void logout()}>
+						{#snippet leading()}<LogOut size={16} />{/snippet}
+						Abmelden
+					</Button>
 
-				<button
-					type="submit"
-					disabled={saving}
-					class="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-red-700 dark:hover:bg-red-600"
-				>
-					{#if saving}<Spinner size={15} />{/if}
-					Änderungen speichern
-				</button>
-			</div>
-		</form>
+					<Button
+						type="submit"
+						variant="primary"
+						size="md"
+						loading={saving}
+						loadingLabel="Änderungen werden gespeichert"
+					>
+						Änderungen speichern
+					</Button>
+				</div>
+			</form>
+		</Area>
 
 		{#if user.isAdmin}
 			<AdminUserManagement />

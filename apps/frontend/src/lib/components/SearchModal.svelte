@@ -5,6 +5,7 @@
 	import { Search } from '@lucide/svelte';
 	import { api, ApiError, type Document, type SearchResult } from '$lib/api';
 	import { documentsResponseSchema } from '@arcivo/api-contracts';
+	import { Overlay } from '@arcivo/ui-components';
 	import { documentViewer, searchQuery } from '$lib/stores';
 	import SearchResultItem from '$lib/components/search/SearchResultItem.svelte';
 
@@ -136,9 +137,6 @@
 				else applyFilter();
 				break;
 			}
-			case 'Escape':
-				close();
-				break;
 		}
 	}
 
@@ -152,78 +150,69 @@
 
 <svelte:window onkeydown={onWindowKeydown} />
 
-{#if searchOpen}
-	<button
-		type="button"
-		class="fixed inset-0 z-40 cursor-default bg-black/20 backdrop-blur-sm"
-		onclick={close}
-		aria-label="Suche schließen"
-	></button>
-
+<Overlay
+	open={searchOpen}
+	onClose={close}
+	role="dialog"
+	modal
+	ariaLabel="Dokumente suchen"
+	backdrop="dim"
+	surfaceClass="top-1/4 left-1/2 w-full max-w-lg -translate-x-1/2 border-red-300 shadow-2xl dark:border-red-900"
+>
 	<div
-		class="fixed top-1/4 left-1/2 z-50 w-full max-w-lg -translate-x-1/2 rounded-xl border border-red-300 bg-white shadow-2xl dark:border-red-900 dark:bg-neutral-900"
-		role="dialog"
-		aria-modal="true"
-		aria-label="Dokumente suchen"
+		class="flex items-center gap-3 border-b border-neutral-200 px-4 py-3 dark:border-neutral-700"
 	>
-		<div
-			class="flex items-center gap-3 border-b border-neutral-200 px-4 py-3 dark:border-neutral-700"
+		<Search size={16} class="shrink-0 text-neutral-400" />
+		<input
+			bind:this={searchInput}
+			bind:value={query}
+			oninput={onInput}
+			onkeydown={onKeydown}
+			type="text"
+			placeholder="Dokument suchen…"
+			class="flex-1 bg-transparent text-sm text-neutral-900 outline-none placeholder:text-neutral-400 dark:text-neutral-100 dark:placeholder:text-neutral-500"
+		/>
+		<kbd
+			class="hidden items-center rounded border border-neutral-300 bg-neutral-100 px-1.5 py-0.5 font-mono text-xs text-neutral-400 sm:inline-flex dark:border-neutral-600 dark:bg-neutral-800"
 		>
-			<Search size={16} class="shrink-0 text-neutral-400" />
-			<input
-				bind:this={searchInput}
-				bind:value={query}
-				oninput={onInput}
-				onkeydown={onKeydown}
-				type="text"
-				placeholder="Dokument suchen…"
-				class="flex-1 bg-transparent text-sm text-neutral-900 outline-none placeholder:text-neutral-400 dark:text-neutral-100 dark:placeholder:text-neutral-500"
-			/>
-			{#if loading}
-				<span class="shrink-0 animate-pulse text-xs text-neutral-400">…</span>
-			{/if}
-			<kbd
-				class="hidden items-center rounded border border-neutral-300 bg-neutral-100 px-1.5 py-0.5 font-mono text-xs text-neutral-400 sm:inline-flex dark:border-neutral-600 dark:bg-neutral-800"
-			>
-				Esc
-			</kbd>
-		</div>
-
-		{#if query.trim() === ''}
-			{#if recentDocs.length > 0}
-				<div class="py-2">
-					<p class="px-4 pt-2 pb-1 text-xs font-medium tracking-wider text-neutral-400 uppercase">
-						Zuletzt geöffnet
-					</p>
-					<ul>
-						{#each recentDocs as doc, index (doc.id)}
-							<SearchResultItem {doc} highlighted={index === highlighted} onSelect={select} />
-						{/each}
-					</ul>
-				</div>
-			{:else}
-				<p class="px-4 py-8 text-center text-sm text-neutral-400">
-					Tippe um Dokumente zu durchsuchen…
-				</p>
-			{/if}
-		{:else if error}
-			<p class="px-4 py-8 text-center text-sm text-red-500 dark:text-red-400">{error}</p>
-		{:else if results.length === 0}
-			<p class="px-4 py-8 text-center text-sm text-neutral-400">
-				{loading ? 'Suche…' : `Keine Ergebnisse für „${query}"`}
-			</p>
-		{:else}
-			<ul class="max-h-72 overflow-y-auto py-2">
-				{#each orderedResults as doc, index (doc.id)}
-					<SearchResultItem
-						{doc}
-						searchTerm={query}
-						matchType={doc.matchType}
-						highlighted={index === highlighted}
-						onSelect={select}
-					/>
-				{/each}
-			</ul>
-		{/if}
+			Esc
+		</kbd>
 	</div>
-{/if}
+
+	{#if query.trim() === ''}
+		{#if recentDocs.length > 0}
+			<div class="py-2">
+				<p class="px-4 pt-2 pb-1 text-xs font-medium tracking-wider text-neutral-400 uppercase">
+					Zuletzt geöffnet
+				</p>
+				<ul>
+					{#each recentDocs as doc, index (doc.id)}
+						<SearchResultItem {doc} highlighted={index === highlighted} onSelect={select} />
+					{/each}
+				</ul>
+			</div>
+		{:else}
+			<p class="px-4 py-8 text-center text-sm text-neutral-400">
+				Tippe um Dokumente zu durchsuchen…
+			</p>
+		{/if}
+	{:else if error}
+		<p class="px-4 py-8 text-center text-sm text-red-500 dark:text-red-400">{error}</p>
+	{:else if results.length === 0}
+		<p class="px-4 py-8 text-center text-sm text-neutral-400">
+			{loading ? 'Suche…' : `Keine Ergebnisse für „${query}"`}
+		</p>
+	{:else}
+		<ul class="max-h-72 overflow-y-auto py-2">
+			{#each orderedResults as doc, index (doc.id)}
+				<SearchResultItem
+					{doc}
+					searchTerm={query}
+					matchType={doc.matchType}
+					highlighted={index === highlighted}
+					onSelect={select}
+				/>
+			{/each}
+		</ul>
+	{/if}
+</Overlay>

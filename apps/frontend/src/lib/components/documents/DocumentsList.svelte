@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Archive, Download, Trash2, File as FileIcon } from '@lucide/svelte';
 	import type { Document } from '$lib/api';
-	import { Spinner } from '@arcivo/ui-components';
+	import { Button, Spinner } from '@arcivo/ui-components';
 	import DocumentThumbnail from './DocumentThumbnail.svelte';
 
 	let {
@@ -163,33 +163,39 @@
 							<div
 								class="flex items-center justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100"
 							>
-								<button
+								<Button
+									variant="ghost"
+									iconOnly
+									size="sm"
 									onclick={(e) => {
 										e.stopPropagation();
 										onDownloadArchive(doc);
 									}}
 									title="Archivversion herunterladen"
-									class="flex items-center justify-center rounded-md p-1.5 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-700 dark:hover:bg-neutral-700 dark:hover:text-neutral-100"
 								>
 									<Archive size={14} />
-								</button>
-								<button
+								</Button>
+								<Button
+									variant="ghost"
+									iconOnly
+									size="sm"
 									onclick={(e) => {
 										e.stopPropagation();
 										onDownloadOriginal(doc);
 									}}
 									title="Original herunterladen"
-									class="flex items-center justify-center rounded-md p-1.5 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-700 dark:hover:bg-neutral-700 dark:hover:text-neutral-100"
 								>
 									<Download size={14} />
-								</button>
-								<button
+								</Button>
+								<Button
+									variant="danger-hint"
+									iconOnly
+									size="sm"
 									onclick={(e) => onDelete(doc, e)}
 									title="Löschen"
-									class="flex items-center justify-center rounded-md p-1.5 text-neutral-400 transition-colors hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/60 dark:hover:text-red-400"
 								>
 									<Trash2 size={14} />
-								</button>
+								</Button>
 							</div>
 						</td>
 					</tr>

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { LayoutGrid, LayoutList } from '@lucide/svelte';
+	import { Header } from '@arcivo/ui-components';
 
 	type ViewMode = 'list' | 'grid';
 
@@ -19,16 +20,14 @@
 </script>
 
 <div class="mb-8 flex items-center justify-between">
-	<div>
-		<h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Dokumente</h1>
-		<p class="mt-1 text-sm text-neutral-500">
-			{#if activeSearch}
-				{resultCount} Ergebnis{resultCount !== 1 ? 'se' : ''} für „{activeSearch}"
-			{:else}
-				{documentCount} Dokument{documentCount !== 1 ? 'e' : ''} gespeichert
-			{/if}
-		</p>
-	</div>
+	<Header
+		level={1}
+		title="Dokumente"
+		description={activeSearch
+			? `${resultCount} Ergebnis${resultCount !== 1 ? 'se' : ''} für „${activeSearch}"`
+			: `${documentCount} Dokument${documentCount !== 1 ? 'e' : ''} gespeichert`}
+		class="!mb-0"
+	/>
 	<div
 		class="flex items-center gap-1 rounded-lg border border-neutral-200 bg-neutral-50 p-1 dark:border-neutral-800 dark:bg-neutral-900"
 	>
