@@ -5,10 +5,12 @@ import ButtonShowcase from '../components/button/ButtonShowcase.svelte';
 import ComboboxShowcase from '../components/combobox/ComboboxShowcase.svelte';
 import HeaderShowcase from '../components/header/HeaderShowcase.svelte';
 import InputShowcase from '../components/input/InputShowcase.svelte';
+import LogoShowcase from '../components/logo/LogoShowcase.svelte';
 import ModalShowcase from '../components/modal/ModalShowcase.svelte';
 import NavItemShowcase from '../components/nav-item/NavItemShowcase.svelte';
 import OverlayShowcase from '../components/overlay/OverlayShowcase.svelte';
 import SpinnerShowcase from '../components/spinner/SpinnerShowcase.svelte';
+import ThemeToggleShowcase from '../components/theme-toggle/ThemeToggleShowcase.svelte';
 
 export type ComponentId =
 	| 'action-item'
@@ -17,10 +19,12 @@ export type ComponentId =
 	| 'combobox'
 	| 'header'
 	| 'input'
+	| 'logo'
 	| 'modal'
 	| 'nav-item'
 	| 'overlay'
-	| 'spinner';
+	| 'spinner'
+	| 'theme-toggle';
 
 export interface ComponentDefinition {
   id: ComponentId;
@@ -30,13 +34,13 @@ export interface ComponentDefinition {
 }
 
 export const components: ComponentDefinition[] = [
-	{
-		id: 'action-item',
-		name: 'ActionItem',
-		description: 'Builds consistent clickable rows for search results and context-menu actions.',
-		showcase: ActionItemShowcase
-	},
-	{
+  {
+    id: 'action-item',
+    name: 'ActionItem',
+    description: 'Builds consistent clickable rows for search results and context-menu actions.',
+    showcase: ActionItemShowcase,
+  },
+  {
     id: 'area',
     name: 'Area',
     description: 'Groups related content in a titled, bordered section.',
@@ -67,9 +71,16 @@ export const components: ComponentDefinition[] = [
     showcase: InputShowcase,
   },
   {
+    id: 'logo',
+    name: 'ArcivoLogo',
+    description: 'Displays the Arcivo brand as a full lockup, symbol, or wordmark.',
+    showcase: LogoShowcase,
+  },
+  {
     id: 'modal',
     name: 'Modal',
-    description: 'Creates centered dialogs with shared headers, content, footers, and dismissal behavior.',
+    description:
+      'Creates centered dialogs with shared headers, content, footers, and dismissal behavior.',
     showcase: ModalShowcase,
   },
   {
@@ -89,5 +100,11 @@ export const components: ComponentDefinition[] = [
     name: 'Spinner',
     description: 'Indicates loading or pending work without interrupting the flow.',
     showcase: SpinnerShowcase,
+  },
+  {
+    id: 'theme-toggle',
+    name: 'ThemeToggle',
+    description: 'Switches between light and dark themes, with optional system preference support.',
+    showcase: ThemeToggleShowcase,
   },
 ];

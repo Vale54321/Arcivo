@@ -2,8 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { onMount } from 'svelte';
-	import ArcivoLogo from '$lib/components/ArcivoLogo.svelte';
-	import { Button, Input, Modal } from '@arcivo/ui-components';
+	import { ArcivoLogo, Button, Input, Modal } from '@arcivo/ui-components';
 	import { ApiError, api } from '$lib/api';
 	import { getAccessToken, setAccessToken } from '$lib/auth';
 
@@ -57,7 +56,7 @@
 >
 	{#snippet header()}
 		<div class="flex w-full flex-col items-center gap-4 text-center">
-			<ArcivoLogo height="40px" />
+			<ArcivoLogo size="lg" />
 			<div>
 				<h1 class="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
 					Willkommen zurück

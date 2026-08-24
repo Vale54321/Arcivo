@@ -5,19 +5,13 @@
 	import { getSidebarContext } from '$lib/state/sidebar.svelte';
 	import { getThemeContext } from '$lib/state/theme.svelte';
 	import { uploadOpen } from '$lib/stores';
-	import { Menu, Moon, Search, Sun, SunMoon, Upload } from '@lucide/svelte';
-	import { Button } from '@arcivo/ui-components';
+	import { Menu, Search, Upload } from '@lucide/svelte';
+	import { Button, ThemeToggle } from '@arcivo/ui-components';
 	import SearchModal from './SearchModal.svelte';
 
 	const sidebar = getSidebarContext();
 	const theme = getThemeContext();
 	let searchModal = $state<SearchModal | null>(null);
-	const NEXT_THEME_MESSAGE = {
-		system: 'Switch to light theme',
-		light: 'Switch to dark theme',
-		dark: 'Use system theme'
-	};
-	const themeMessage = NEXT_THEME_MESSAGE[theme.current];
 
 	async function openUpload() {
 		uploadOpen.set(true);
@@ -60,22 +54,7 @@
 	</div>
 
 	<!-- Theme toggle -->
-	<Button
-		variant="ghost"
-		iconOnly
-		onclick={theme.toggle}
-		class="ml-3"
-		aria-label={themeMessage}
-		title={themeMessage}
-	>
-		{#if theme.current === 'system'}
-			<SunMoon size={18} />
-		{:else if theme.current === 'light'}
-			<Moon size={18} />
-		{:else}
-			<Sun size={18} />
-		{/if}
-	</Button>
+	<ThemeToggle theme={theme.current} system onchange={(value) => theme.set(value)} class="ml-3" />
 
 	<Button type="button" variant="primary" onclick={() => void openUpload()} class="ml-2">
 		<Upload size={15} />

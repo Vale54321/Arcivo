@@ -1,3 +1,5 @@
+export { default as ArcivoLogo } from './ArcivoLogo.svelte';
+export type { ArcivoLogoSize, ArcivoLogoVariant } from './ArcivoLogo.svelte';
 export { default as Button } from './Button.svelte';
 export type { ButtonSize, ButtonVariant } from './Button.svelte';
 export { default as Input } from './Input.svelte';
@@ -5,6 +7,8 @@ export type { InputVariant } from './Input.svelte';
 export { default as Area } from './Area.svelte';
 export { default as Header } from './Header.svelte';
 export { default as Spinner } from './Spinner.svelte';
+export { default as ThemeToggle } from './ThemeToggle.svelte';
+export type { ThemePreference } from './ThemeToggle.svelte';
 export { default as NavItem } from './NavItem.svelte';
 export { default as ActionItem } from './ActionItem.svelte';
 export { default as Overlay } from './Overlay.svelte';

@@ -1,11 +1,10 @@
 <script lang="ts">
-	import ArcivoLogo from './ArcivoLogo.svelte';
 	import { getSidebarContext } from '$lib/state/sidebar.svelte';
 	import { Files, FolderOpen, Settings, Tag, Trash2, X, type LucideIcon } from '@lucide/svelte';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { currentUser } from '$lib/state/current-user';
-	import { Button, NavItem } from '@arcivo/ui-components';
+	import { ArcivoLogo, Button, NavItem } from '@arcivo/ui-components';
 
 	const sidebar = getSidebarContext();
 
@@ -69,7 +68,7 @@
 >
 	<div class="mb-6 flex items-center justify-between px-4">
 		<a href={resolve('/documents/')}>
-			<ArcivoLogo height="30px" />
+			<ArcivoLogo size="md" />
 		</a>
 		<Button
 			variant="ghost"
