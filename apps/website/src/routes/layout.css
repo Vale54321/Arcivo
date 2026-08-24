@@ -1,8 +1,5 @@
 @import 'tailwindcss';
-
-/* Shared Svelte components are source files outside this app's default scan. */
 @source '../../../../libs/ui-components/src';
-
 @variant dark (&:where(.dark, .dark *));
 
 @layer base {
@@ -17,7 +14,7 @@
   }
 
   body {
-    @apply min-w-80 bg-white font-sans text-neutral-900 antialiased transition-colors dark:bg-neutral-950 dark:text-neutral-100;
+    @apply min-w-80 bg-white font-sans text-neutral-900 antialiased dark:bg-neutral-950 dark:text-neutral-100;
   }
 
   a {
@@ -26,65 +23,56 @@
 }
 
 @layer components {
-  .nav-link {
-    @apply rounded-md px-3 py-2 text-sm font-medium text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100;
+  .footer-link {
+    @apply transition-colors hover:text-neutral-900 dark:hover:text-white;
   }
 
-  .header-link,
-  .primary-link,
-  .outline-link {
-    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap font-semibold transition-colors;
+  .hero-grid {
+    background-image:
+      linear-gradient(to right, rgb(229 229 229 / 0.4) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(229 229 229 / 0.4) 1px, transparent 1px);
+    background-size: 40px 40px;
   }
 
-  .header-link {
-    @apply min-h-8 rounded-lg border border-neutral-300 px-3 text-sm text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800;
+  .dark .hero-grid {
+    background-image:
+      linear-gradient(to right, rgb(64 64 64 / 0.32) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(64 64 64 / 0.32) 1px, transparent 1px);
   }
 
-  .primary-link {
-    @apply min-h-10 rounded-lg bg-red-600 px-4 text-sm text-white shadow-sm hover:bg-red-500 focus-visible:ring-offset-white dark:bg-red-700 dark:hover:bg-red-600 dark:focus-visible:ring-offset-neutral-950;
+  .section-kicker {
+    @apply text-xs font-semibold tracking-[0.08em] text-red-600 uppercase dark:text-red-400;
   }
 
-  .outline-link {
-    @apply min-h-10 rounded-lg border border-neutral-300 px-4 text-sm text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800;
+  .area-icon {
+    @apply mb-3 flex size-9 items-center justify-center rounded-lg bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300;
   }
 
-  .hero-badge {
-    @apply inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-medium tracking-wide text-red-600 dark:border-red-950 dark:bg-red-950/40 dark:text-red-400;
+  .area-copy {
+    @apply text-sm leading-6 text-neutral-500 dark:text-neutral-400;
   }
 
-  .stat {
-    @apply flex min-h-28 flex-col items-center justify-center px-4 text-center text-[13px] text-neutral-500 dark:text-neutral-400;
+  .page-header {
+    @apply mx-auto max-w-6xl px-5 pt-14 pb-8 sm:px-8 sm:pt-16;
   }
 
-  .stat-value {
-    @apply mb-0.5 text-3xl font-extrabold tracking-[-0.04em] text-neutral-900 dark:text-neutral-100;
+  .feature-row {
+    @apply flex gap-3 py-5 sm:px-5;
   }
 
-  .stat-value span {
-    @apply text-red-600 dark:text-red-500;
+  .feature-row-icon {
+    @apply flex size-9 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300;
   }
 
-  .site-section {
-    @apply mx-auto max-w-6xl px-6 py-20;
+  .feature-row h2 {
+    @apply text-sm font-semibold text-neutral-900 dark:text-neutral-100;
   }
 
-  .section-label {
-    @apply mb-3 text-xs font-semibold tracking-[0.08em] text-red-600 uppercase dark:text-red-400;
+  .feature-row p {
+    @apply mt-1 text-sm leading-5 text-neutral-500 dark:text-neutral-400;
   }
 
-  .section-title {
-    @apply text-3xl font-extrabold tracking-[-0.03em] text-neutral-900 sm:text-4xl dark:text-neutral-100;
-  }
-
-  .section-subtitle {
-    @apply mt-2 max-w-xl text-base leading-7 text-neutral-500 dark:text-neutral-400;
-  }
-
-  .feature-card {
-    @apply rounded-xl border border-neutral-200 bg-white p-6 transition-[border-color,box-shadow] hover:border-neutral-300 hover:shadow-[0_4px_16px_rgb(0_0_0_/_0.06)] dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700 dark:hover:shadow-[0_4px_20px_rgb(0_0_0_/_0.4)];
-  }
-
-  .feature-icon {
-    @apply mb-4 flex size-10 items-center justify-center rounded-[10px] border border-red-200 bg-red-50 text-red-600 dark:border-red-950 dark:bg-red-950/40 dark:text-red-400;
+  .issue-icon {
+    @apply flex size-8 items-center justify-center rounded-lg bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400;
   }
 }

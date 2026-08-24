@@ -12,9 +12,14 @@
 
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import type { HTMLButtonAttributes } from 'svelte/elements';
+	import type { HTMLAnchorAttributes, HTMLButtonAttributes } from 'svelte/elements';
 
 	interface Props extends Omit<HTMLButtonAttributes, 'children' | 'class' | 'disabled' | 'type'> {
+		/** Renders the control as a link when provided. */
+		href?: string;
+		target?: HTMLAnchorAttributes['target'];
+		rel?: HTMLAnchorAttributes['rel'];
+		download?: HTMLAnchorAttributes['download'];
 		/** Visual emphasis of the button. */
 		variant?: ButtonVariant;
 		/** Button height and horizontal padding. */
@@ -38,6 +43,10 @@
 	}
 
 	let {
+		href,
+		target,
+		rel,
+		download,
 		variant = 'secondary',
 		size = 'md',
 		loading = false,
@@ -81,18 +90,14 @@
 		md: 'size-9 rounded-lg',
 		lg: 'size-11 rounded-lg'
 	};
+
+	let classes = $derived(
+		`inline-flex shrink-0 items-center justify-center whitespace-nowrap font-semibold transition-[background-color,border-color,color,box-shadow,opacity,transform] duration-150 ease-out outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-red-400 dark:focus-visible:ring-offset-neutral-950 ${variants[variant]} ${iconOnly ? iconOnlySizes[size] : sizes[size]} ${fullWidth ? 'w-full' : ''} ${variant === 'link' ? 'h-auto min-h-0 px-0 py-0 shadow-none focus-visible:rounded-sm' : ''} ${disabled || loading ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} ${className}`
+	);
+	let anchorProps = $derived(restProps as unknown as HTMLAnchorAttributes);
 </script>
 
-<button
-	{...restProps}
-	{type}
-	disabled={disabled || loading}
-	aria-busy={loading || undefined}
-	data-variant={variant}
-	data-size={size}
-	data-loading={loading || undefined}
-	class="inline-flex shrink-0 cursor-pointer items-center justify-center whitespace-nowrap font-semibold transition-[background-color,border-color,color,box-shadow,opacity,transform] duration-150 ease-out outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50 dark:focus-visible:ring-red-400 dark:focus-visible:ring-offset-neutral-950 {variants[variant]} {iconOnly ? iconOnlySizes[size] : sizes[size]} {fullWidth ? 'w-full' : ''} {variant === 'link' ? 'h-auto min-h-0 px-0 py-0 shadow-none focus-visible:rounded-sm' : ''} {className}"
->
+{#snippet content()}
 	{#if loading}
 		<span
 			class="size-4 shrink-0 animate-spin rounded-full border-2 border-current border-r-transparent"
@@ -110,4 +115,36 @@
 	{#if loading}
 		<span class="sr-only">{loadingLabel}</span>
 	{/if}
-</button>
+{/snippet}
+
+{#if href}
+	<a
+		{...anchorProps}
+		href={disabled || loading ? undefined : href}
+		{target}
+		{rel}
+		{download}
+		aria-disabled={disabled || loading || undefined}
+		aria-busy={loading || undefined}
+		tabindex={disabled || loading ? -1 : anchorProps.tabindex}
+		data-variant={variant}
+		data-size={size}
+		data-loading={loading || undefined}
+		class={classes}
+	>
+		{@render content()}
+	</a>
+{:else}
+	<button
+		{...restProps}
+		{type}
+		disabled={disabled || loading}
+		aria-busy={loading || undefined}
+		data-variant={variant}
+		data-size={size}
+		data-loading={loading || undefined}
+		class={classes}
+	>
+		{@render content()}
+	</button>
+{/if}
